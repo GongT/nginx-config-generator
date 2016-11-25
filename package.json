@@ -1,0 +1,17 @@
+{
+	"name": "nginx-config-generator",
+	"version": "0.0.0",
+	"description": "",
+	"scripts": {
+	},
+	"repository": {},
+	"dependencies": {
+		"docker-events": "0.0.2",
+		"dockerode": "^2.3.1",
+		"@gongt/jenv-data": "^1.2.3",
+		"@types/debug": "0.0.29",
+		"@types/node": "^6.0.51",
+		"debug": "^2.3.3",
+		"source-map-support": "^0.4.6"
+	}
+}
