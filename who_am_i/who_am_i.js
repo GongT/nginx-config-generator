@@ -51,6 +51,9 @@ if (forceServerId) {
 if (!foundMySelf) {
 	console.error(`CAN'T FIND OUT WHO AM I\n  maybe a new server not list in server_ip.json ?`);
 	console.error('server ip map: ', serverIpMap);
+	if(!process.env.RUN_IN_DOCKER){
+		console .error('set `DOCKER_MY_SERVER_ID` environment var to debug.')
+	}
 	process.exit(2);
 }
 

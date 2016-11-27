@@ -8,12 +8,12 @@ const handlers: Handler[] = [];
 
 const debug = Debug('host:docker');
 
-const docker = new Dockerode({
+export const docker = new Dockerode({
 	socketPath: process.env.RUN_IN_DOCKER? '/data/host-var-run/docker.sock' : '/var/run/docker.sock'
 });
 const emitter = new DockerEvents({docker});
 
-let busy = false, t: NodeJS.Timer = null;
+let busy = false, t: NodeJS.Timer = null, ot: NodeJS.Timer = null;
 
 // watch
 emitter.on("connect", function () {
@@ -22,11 +22,23 @@ emitter.on("connect", function () {
 });
 emitter.on("start", function (message) {
 	debug("container started: %j", message);
-	scheduleGenerate("container started", message.id);
+	if (ot) {
+		clearTimeout(ot);
+	}
+	ot = setTimeout(() => {
+		scheduleGenerate("container started", message.id);
+		ot = null;
+	}, 2000);
 });
 emitter.on("die", function (message) {
 	debug("container stopped: %j", message);
-	scheduleGenerate("container stopped", message.id);
+	if (ot) {
+		clearTimeout(ot);
+	}
+	ot = setTimeout(() => {
+		scheduleGenerate("container stopped", message.id);
+		ot = null;
+	}, 2000);
 });
 
 debug("connecting to docker api");
@@ -38,7 +50,7 @@ function scheduleGenerate(why, target?) {
 		debug('check %s is in building process...', target);
 		docker.getContainer(target).inspect((err, inspect) => {
 			const text = JSON.stringify(inspect, null, 2);
-			if (/BUILDING=yes/.test(text)) {
+			if (/BUILDING['"]?\s*[=:]\s*['"]?yes/.test(text)) {
 				debug('%s is in building process. ignore.', target);
 			} else {
 				debug('%s is not in building process. start process.', target);
@@ -108,6 +120,10 @@ export interface Handler {
 	(allDockers: DockerInspect[]): void;
 }
 
+let changeCount = 0;
+
 export function handleChange(cb: Handler) {
+	changeCount++;
+	console.log('docker change count=%s', changeCount);
 	handlers.push(cb);
 }

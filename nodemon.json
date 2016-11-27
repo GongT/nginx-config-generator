@@ -1,0 +1,7 @@
+{
+	"ignore": [
+		"debug_nginx_storage/",
+		"who_am_i/"
+	],
+	"ext": "conf js json"
+}

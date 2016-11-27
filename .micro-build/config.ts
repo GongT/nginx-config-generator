@@ -25,9 +25,10 @@ build.addPlugin(EPlugins.typescript, {
 	target: 'dist',
 });
 
-build.environmentVariable('DEBUG', 'ncg:*');
+build.environmentVariableAppend('DEBUG', 'ncg:*,config:*', null, ',');
 
 build.volume('/etc', './host-etc');
+build.volume('/var/run', './host-var-run');
 
 // build.prependDockerFile('/path/to/docker/file');
 // build.appendDockerFile('/path/to/docker/file');

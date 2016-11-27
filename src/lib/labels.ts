@@ -30,7 +30,7 @@ export function getAllNames(item: DockerInspect) {
 		ret = ret.concat(alias);
 	}
 	
-	return ret;
+	return ret.map(s => s.trim()).filter(onlyUnique);
 }
 
 export function getServiceAlias(ins: DockerInspect) {
@@ -50,8 +50,12 @@ export function getServiceAlias(ins: DockerInspect) {
 		alias = [alias]
 	}
 	if (alias) {
-		return alias;
+		return alias.map(s => s.trim()).filter(onlyUnique);
 	} else {
 		return [];
 	}
+}
+
+function onlyUnique(value, index, self) {
+	return self.indexOf(value) === index;
 }
