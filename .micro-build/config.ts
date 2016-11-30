@@ -35,12 +35,12 @@ build.volume('/var/run', './host-var-run');
 // build.prependDockerFile('/path/to/docker/file');
 // build.appendDockerFile('/path/to/docker/file');
 if (JsonEnv.isDebug) {
-	build.dependService(JsonEnv.nginxDockerName, 'http://github.com/GongT/nginx-docker.git');
+	build.dependService('nginx', 'http://github.com/GongT/nginx-docker.git');
 } else {
-	build.dependIsolate(JsonEnv.nginxDockerName);
+	build.dependIsolate('nginx');
 }
 build.dependService('npm-registry', 'http://github.com/GongT/npm-registry.git');
-build.dockerRunArgument(`--volumes-from=${JsonEnv.nginxDockerName}`, "--dns=${HOST_LOOP_IP}");
+build.dockerRunArgument(`--volumes-from=nginx`, "--dns=${HOST_LOOP_IP}");
 
 process.env.DEBUG += ',config:*';
 try {

@@ -91,7 +91,7 @@ handleChange((list) => {
 	
 	if (true) {
 		console.log('try to restart nginx...');
-		docker_exec(docker, JsonEnv.nginxDockerName, ['/usr/sbin/nginx', '-t'])
+		docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-t'])
 			.then(([exit,out,err]) => {
 				if (exit === 0) {
 					console.log('\x1B[38;5;10m >>> nginx config reloaded. \x1B[0m')
