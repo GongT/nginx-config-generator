@@ -1,6 +1,7 @@
-import {IServiceConfig} from "../../handler";
-export function withSSL(service: IServiceConfig) {
+export function createSSL(arg){
+	const {service, configMainBody, configFileServer} = arg;
 	return `
+## createSSL
 listen 443 ssl http2;
 listen [::]:443 ssl http2;
 ### location.ssl
@@ -10,5 +11,6 @@ include /etc/letsencrypt/options-ssl-nginx.conf;
 ssl_trusted_certificate /etc/letsencrypt/live/${service.outerSubDomainName}/chain.pem;
 ssl_stapling on;
 ssl_stapling_verify on;
+## createSSL END
 `
 }
