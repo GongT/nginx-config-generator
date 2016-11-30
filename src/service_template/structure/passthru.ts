@@ -11,7 +11,7 @@ proxy_set_header x-is-internal-request YES;
 
 ## upstream config
 proxy_http_version 1.1;
-proxy_set_header Host ${service.outerSubDomainName};
+proxy_set_header Host ${service.outerDomainName};
 # health_check;
 proxy_buffer_size 128k;
 proxy_buffers 32 32k;

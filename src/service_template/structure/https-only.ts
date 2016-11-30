@@ -19,7 +19,7 @@ server {
 	listen [::]:80;
 	
 	# SSL jump
-	return 301 https://${service.outerSubDomainName}$request_uri;
+	return 301 https://${service.outerDomainName}$request_uri;
 }
 ### createHttpsServer END
 `;
