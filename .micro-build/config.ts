@@ -14,6 +14,8 @@ const projectName = 'nginx-config-generator';
 build.baseImage('node');
 build.projectName(projectName);
 build.domainName(`${projectName}.${JsonEnv.baseDomainName}`);
+
+build.npmCacheLayer(JsonEnv.gfw.npmRegistry);
 build.install('./package.json');
 
 build.startupCommand('dist/boot.js');

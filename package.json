@@ -2,8 +2,7 @@
 	"name": "nginx-config-generator",
 	"version": "0.0.0",
 	"description": "",
-	"scripts": {
-	},
+	"scripts": {},
 	"repository": {},
 	"dependencies": {
 		"docker-events": "0.0.2",
