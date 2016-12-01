@@ -7,13 +7,13 @@ export function createHttpsServer(arg) {
 	return `
 ### createHttpsServer
 server {
-	server_name ${service.serviceName};
+	server_name ${service.serverName};
 	
 	${createSSL(arg).replace(/\n/g, '\n\t')}
     
     ${createBody(arg).replace(/\n/g, '\n\t')}
 }
-server {
+server { # http jump in https server
 	server_name ${service.serverName};
 	
 	listen 80;
