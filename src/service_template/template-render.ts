@@ -20,9 +20,6 @@ export function generateConfigFile(service: IServiceConfig) {
 	if (!service.locations) {
 		service.locations = {};
 	}
-	if (whoAmI.front && service.SSL !== false) { // ssl - require cert bot
-		service.locations['/.well-known'] = 'certbot';
-	}
 	
 	Object.keys(service.locations).map((location) => {
 		createServerSection({

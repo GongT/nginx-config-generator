@@ -31,6 +31,7 @@ build.environmentVariableAppend('DEBUG', 'ncg:*,config:*', null, ',');
 
 build.volume('/etc', './host-etc');
 build.volume('/var/run', './host-var-run');
+build.permantalStorage('/data/certbot');
 
 // build.prependDockerFile('/path/to/docker/file');
 // build.appendDockerFile('/path/to/docker/file');

@@ -1,5 +1,6 @@
 import {createBody} from "./body";
 import {createSSL} from "./ssl";
+import {createCertBotPass} from "./certbot";
 
 export function createHttpsServer(arg) {
 	const {service, configMainBody, configFileServer} = arg;
@@ -18,8 +19,12 @@ server {
 	listen 80;
 	listen [::]:80;
 	
+	${createCertBotPass(arg)}
+	
 	# SSL jump
-	return 301 https://${service.outerDomainName}$request_uri;
+	location / {
+		return 301 https://${service.outerDomainName}$request_uri;
+	}
 }
 ### createHttpsServer END
 `;
