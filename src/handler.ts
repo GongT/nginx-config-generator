@@ -34,7 +34,7 @@ handleChange((list) => {
 			obj.outerDomainName = (obj.outerSubDomainName || name) + '.' + JsonEnv.baseDomainName;
 		}
 		// TODO: universal service name
-		obj.serverName = runningService[name]? getAllNames(runningService[name]).join(' ') : obj.outerDomainName;
+		obj.serverName = obj.outerDomainName; /*runningService[name]? getAllNames(runningService[name]).join(' ') : obj.outerDomainName;*/
 		return obj;
 	});
 	console.log('--------------\nservice: \n%j', serviceDefines);
