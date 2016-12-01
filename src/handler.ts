@@ -32,7 +32,7 @@ handleChange((list) => {
 		obj.existsCurrentServer = runningService.hasOwnProperty(name);
 		obj.serviceName = name;
 		if (!obj.outerDomainName) {
-			obj.outerDomainName = obj.serviceName + '.' + JsonEnv.baseDomainName;
+			obj.outerDomainName = (obj.outerSubDomainName || name) + '.' + JsonEnv.baseDomainName;
 		}
 		// TODO: universal service name
 		obj.serverName = runningService[name]? getAllNames(runningService[name]).join(' ') : obj.outerDomainName;
