@@ -16,7 +16,6 @@ export interface IServiceConfig {
 	SSL: boolean | 'force';
 	outerSubDomainName: string;
 	outerDomainName?: string;
-	running: DockerInspect;
 	existsCurrentServer: boolean;
 	serviceName: string;
 }
@@ -28,7 +27,7 @@ handleChange((list) => {
 	const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.nginx_services).map((name) => {
 		const obj: IServiceConfig = JSON.parse(JSON.stringify(JsonEnv.nginx_services[name]));
 		
-		console.log(obj);
+		console.log('registed service [%s]: ', name, obj);
 		obj.existsCurrentServer = runningService.hasOwnProperty(name);
 		obj.serviceName = name;
 		if (!obj.outerDomainName) {
@@ -36,9 +35,9 @@ handleChange((list) => {
 		}
 		// TODO: universal service name
 		obj.serverName = runningService[name]? getAllNames(runningService[name]).join(' ') : obj.outerDomainName;
-		obj.running = runningService[name];
 		return obj;
 	});
+	console.log('--------------\nservice: \n%j', serviceDefines);
 	
 	const hash = {};
 	let someChange = 0;
