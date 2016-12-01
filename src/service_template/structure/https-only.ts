@@ -13,7 +13,7 @@ server {
     ${createBody(arg).replace(/\n/g, '\n\t')}
 }
 server {
-	server_name ${service.serviceName};
+	server_name ${service.serverName};
 	
 	listen 80;
 	listen [::]:80;

@@ -6,7 +6,7 @@ export function createAllServer(arg) {
 	return `
 #### createAllServer
 server {
-	server_name ${service.serviceName};
+	server_name ${service.serverName};
 	
 	listen 80;
 	listen [::]:80;
