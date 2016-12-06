@@ -1,6 +1,6 @@
 import * as Debug from "debug";
 import {handleChange, docker} from "./lib/docker";
-import {getServiceMap, getAllNames} from "./lib/labels";
+import {getServiceMap} from "./lib/labels";
 import {generateConfigFile} from "./service_template/template-render";
 import {readdirSync, writeFileSync, readFileSync, unlinkSync} from "fs";
 import {SERVICE_SAVE_FOLDER} from "./boot";
@@ -15,6 +15,7 @@ export interface IServiceConfig {
 	machines: string[];
 	SSL: boolean | 'force';
 	outerSubDomainName: string;
+	interfaceMachine: string;
 	outerDomainName?: string;
 	existsCurrentServer: boolean;
 	serviceName: string;
@@ -34,7 +35,8 @@ handleChange((list) => {
 			obj.outerDomainName = (obj.outerSubDomainName || name) + '.' + JsonEnv.baseDomainName;
 		}
 		// TODO: universal service name
-		obj.serverName = obj.outerDomainName; /*runningService[name]? getAllNames(runningService[name]).join(' ') : obj.outerDomainName;*/
+		obj.serverName = obj.outerDomainName;
+		/*runningService[name]? getAllNames(runningService[name]).join(' ') : obj.outerDomainName;*/
 		return obj;
 	});
 	console.log('--------------\nservice: \n%j', serviceDefines);

@@ -31,7 +31,7 @@ export function generateConfigFile(service: IServiceConfig) {
 	});
 	
 	let body;
-	if (!whoAmI.front || service.SSL === false) {
+	if (!isInterface(service) || service.SSL === false) {
 		body = createHttpServer({service, configMainBody, configFileServer});
 	} else if (service.SSL === 'force') {
 		body = createHttpsServer({service, configMainBody, configFileServer});
@@ -45,5 +45,9 @@ export function generateConfigFile(service: IServiceConfig) {
 ${configFileGlobal.join('\n')}
 
 ${body}
-`.replace(/\n\s*(\n\s*\n)/g,'$1')
+`.replace(/\n\s*(\n\s*\n)/g, '$1')
+}
+
+function isInterface(service: IServiceConfig) {
+	return whoAmI.id === service.interfaceMachine;
 }

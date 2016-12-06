@@ -19,7 +19,10 @@ const forceServerId = JsonEnv.deploy.forceServerId || process.env.DOCKER_MY_SERV
 if (forceServerId) {
 	debug('who_am_i: found server id from env [%s]', forceServerId);
 	foundMySelf = serverIpMap[forceServerId];
-	foundMySelf.id = forceServerId;
+	if (foundMySelf) {
+		foundMySelf.id = forceServerId;
+		debug('server not defined: ', forceServerId);
+	}
 } else {
 	const matchedItems = [];
 	Object.keys(ifaces).forEach((ifName) => {
@@ -51,8 +54,8 @@ if (forceServerId) {
 if (!foundMySelf) {
 	console.error(`CAN'T FIND OUT WHO AM I\n  maybe a new server not list in server_ip.json ?`);
 	console.error('server ip map: ', serverIpMap);
-	if(!process.env.RUN_IN_DOCKER){
-		console .error('set `DOCKER_MY_SERVER_ID` environment var to debug.')
+	if (!process.env.RUN_IN_DOCKER) {
+		console.error('set `DOCKER_MY_SERVER_ID` environment var to debug.')
 	}
 	process.exit(2);
 }
