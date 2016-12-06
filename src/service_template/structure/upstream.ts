@@ -1,9 +1,13 @@
 import {IServiceConfig} from "../../handler";
+import {whoAmI} from "../../../who_am_i/index";
 export function createUpstream(service: IServiceConfig) {
 	return `### createUpstream
-upstream ${service.serviceName}_service_upstream {
+upstream ${getUpstreamName(service)} {
 	server ${service.serviceName} weight=100 fail_timeout=1s; # <- self
 ${service.machines.map((server) => {
+		if (server === whoAmI.id) {
+			server = 'upstream:8888';
+		}
 		return `    server ${server} weight=10 fail_timeout=5s;`;
 	}).join('\n')}
 }
@@ -11,9 +15,5 @@ ${service.machines.map((server) => {
 }
 
 export function getUpstreamName(service: IServiceConfig) {
-	if (service.existsCurrentServer) {
-		return `${service.serviceName}_service_upstream`;
-	} else {
-		return 'default-global-upstream'
-	}
+	return `${service.serviceName}_service_upstream`;
 }

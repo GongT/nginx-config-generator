@@ -24,8 +24,15 @@ if (!existsSync(dirname(LOADER_PATH))) {
 	mkdirSync(dirname(LOADER_PATH));
 }
 writeFileSync(LOADER_PATH, `
-upstream default-global-upstream {
-    server upstream weight=100 fail_timeout=1s;
+server {
+	listen 8888;
+	server_name _;
+	root /data/proxy-error;
+	index index.html;
+	error_page 500 index.html;
+	location / {
+		return 500;
+	}
 }
 
 map $http_x_is_internal_request $is_loop_request {

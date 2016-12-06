@@ -11,9 +11,7 @@ export function generateConfigFile(service: IServiceConfig) {
 	const configFileServer = ['### server bodies '];
 	const configMainBody = [];
 	
-	if (service.existsCurrentServer) {
-		configFileGlobal.push(createUpstream(service));
-	}
+	configFileGlobal.push(createUpstream(service));
 	
 	const createServerSection = createReplacer(service, configFileGlobal, configFileServer, configMainBody);
 	
