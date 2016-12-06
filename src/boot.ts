@@ -35,10 +35,10 @@ server {
 	}
 }
 
-map $http_x_is_internal_request $is_loop_request {
-    default "0";
-    YES  "1";
-}
+# map $http_x_is_internal_request $is_loop_request {
+#     default "0";
+#     YES  "1";
+# }
 
 
 include generated.d/*.conf;

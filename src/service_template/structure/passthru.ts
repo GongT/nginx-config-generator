@@ -5,9 +5,9 @@ export function createPassthru(arg) {
 	const upstream = getUpstreamName(service);
 	
 	return `
-# prevent request loop
-if ($is_loop_request) { return 500; }
-proxy_set_header x-is-internal-request YES;
+# prevent request loop - buggy
+#if ($is_loop_request) { return 500; }
+#proxy_set_header x-is-internal-request YES;
 
 ## upstream config
 proxy_http_version 1.1;
