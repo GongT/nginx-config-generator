@@ -47,5 +47,5 @@ ${body}
 }
 
 function isInterface(service: IServiceConfig) {
-	return whoAmI.id === service.interfaceMachine;
+	return service.interfaceMachine.indexOf(whoAmI.id) !== -1;
 }
