@@ -16,7 +16,7 @@ build.projectName(projectName);
 build.domainName(`${projectName}.${JsonEnv.baseDomainName}`);
 
 build.isInChina(JsonEnv.gfw.isInChina);
-build.npmCacheLayer(JsonEnv.gfw.npmRegistry);
+build.npmInstallSource(JsonEnv.gfw.npmRegistry.upstream);
 build.install('./package.json');
 
 build.startupCommand('dist/boot.js');
@@ -32,7 +32,6 @@ build.environmentVariableAppend('DEBUG', 'ncg:*,config:*', null, ',');
 
 build.volume('/etc', './host-etc');
 build.volume('/var/run', './host-var-run');
-build.permantalStorage('/data/certbot');
 
 // build.prependDockerFile('/path/to/docker/file');
 // build.appendDockerFile('/path/to/docker/file');
@@ -41,7 +40,7 @@ if (JsonEnv.isDebug) {
 } else {
 	build.dependIsolate('nginx');
 }
-build.dependService('npm-registry', 'http://github.com/GongT/npm-registry.git');
+// can't depend on this:  build.dependService('npm-registry', 'http://github.com/GongT/npm-registry.git');
 build.dockerRunArgument(`--volumes-from=nginx`, "--dns=${HOST_LOOP_IP}");
 
 process.env.DEBUG += ',config:*';
