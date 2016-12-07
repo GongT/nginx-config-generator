@@ -26,8 +26,8 @@ export function createSSL(arg, missingSafe: boolean) {
 		if (missingSafe) {
 			return `
 ### no ssl cert found...
-listen 80;
-listen [::]:80;
+listen 443;
+listen [::]:443;
 `;
 		} else {
 			return `
