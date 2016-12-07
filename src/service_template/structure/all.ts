@@ -12,11 +12,11 @@ server {
 	listen 80;
 	listen [::]:80;
 	
-	${createCertBotPass(arg)}
+	${createCertBotPass(arg).replace(/\n/g, '\n\t')}
 	
-	${createSSL(arg)}
+	${createSSL(arg, false).replace(/\n/g, '\n\t')}
     
-    ${createBody(arg)}
+    ${createBody(arg).replace(/\n/g, '\n\t')}
 }
 #### createAllServer END
 `;

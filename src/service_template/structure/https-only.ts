@@ -9,7 +9,7 @@ export function createHttpsServer(arg) {
 server {
 	server_name ${service.serverName};
 	
-	${createSSL(arg).replace(/\n/g, '\n\t')}
+	${createSSL(arg, true).replace(/\n/g, '\n\t')}
     
     ${createBody(arg).replace(/\n/g, '\n\t')}
 }
@@ -19,7 +19,7 @@ server { # http jump in https server
 	listen 80;
 	listen [::]:80;
 	
-	${createCertBotPass(arg)}
+	${createCertBotPass(arg).replace(/\n/g, '\n\t')}
 	
 	# SSL jump
 	location / {
