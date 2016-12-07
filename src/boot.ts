@@ -25,7 +25,7 @@ if (!existsSync(dirname(LOADER_PATH))) {
 }
 writeFileSync(LOADER_PATH, `
 server {
-	listen 8888;
+	listen 8888 default_server;
 	server_name _;
 	root /data/proxy-error;
 	index index.html;

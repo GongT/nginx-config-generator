@@ -8,7 +8,7 @@ export function createUpstream(service: IServiceConfig) {
 	if (service.existsCurrentServer) {
 		selfLine = `server ${service.serviceName} weight=100 fail_timeout=1s; # <- self`;
 	} else if (externals.length === 0) {
-		selfLine = `server upstream:8888 weight=100 fail_timeout=1s; # TRIGGER ERROR`;
+		selfLine = `server 127.0.0.1:8888 weight=100 fail_timeout=1s; # TRIGGER ERROR`;
 	}
 	
 	return `### createUpstream
