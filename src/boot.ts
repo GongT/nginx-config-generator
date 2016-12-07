@@ -27,12 +27,7 @@ writeFileSync(LOADER_PATH, `
 server {
 	listen 8888 default_server;
 	server_name _;
-	root /data/proxy-error;
-	index index.html;
-	error_page 500 index.html;
-	location / {
-		return 500;
-	}
+	return 500;
 }
 
 # map $http_x_is_internal_request $is_loop_request {
