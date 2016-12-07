@@ -92,16 +92,24 @@ handleChange((list) => {
 		}
 	});
 	
-	if (true) {
+	if (process.env.RUN_IN_DOCKER) {
 		console.log('try to restart nginx...');
-		docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-t'])
-			.then(([exit,out,err]) => {
-				if (exit === 0) {
-					console.log('\x1B[38;5;10m >>> nginx config reloaded. \x1B[0m')
-				} else {
-					console.log('\x1B[38;5;9m >>> nginx config has error. \x1B[0m')
-				}
-			}).catch((e) => {
+		docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-t']).then(([exit,out,err]) => {
+			if (exit === 0) {
+				console.log('\x1B[38;5;10m >>> nginx config test success. \x1B[0m');
+				docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-s', 'reload']).then(([exit,out,err]) => {
+					if (exit === 0) {
+						console.log('\x1B[38;5;10m >>> nginx reload success. \x1B[0m');
+					} else {
+						console.log('\x1B[38;5;9m >>> nginx reload failed. \x1B[0m')
+					}
+				}).catch((e) => {
+					console.error('Docker Exec failed: ', e);
+				});
+			} else {
+				console.log('\x1B[38;5;9m >>> nginx config has error. \x1B[0m')
+			}
+		}).catch((e) => {
 			console.error('Docker Exec failed: ', e);
 		});
 	}
