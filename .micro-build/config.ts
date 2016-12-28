@@ -23,6 +23,7 @@ build.startupCommand('dist/boot.js');
 build.shellCommand('/usr/local/bin/node');
 // build.stopCommand('stop.sh');
 
+build.addPlugin(EPlugins.jenv);
 build.addPlugin(EPlugins.typescript, {
 	source: 'src',
 	target: 'dist',
