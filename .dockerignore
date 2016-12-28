@@ -1,3 +1,41 @@
+### START MICRO-BUILD SECTION >>>
+# DO NOT EDIT THIS BY HAND
+.*
+.tgz
+node_modules
+jspm_packages
+**/node_modules
+**/jspm_packages
+*.log
+npm-debug.log*
+coverage/
+*.md
+!.micro-build/json-env-data.json
+!.jsonenv/_current_result.json.d.ts
+!.micro-build/npm-install
+!.micro-build/package-json
+!.micro-build/jspm-install
+dist
+### <<< END MICRO-BUILD SECTION
+
+### START MICRO-BUILD SECTION >>> 
+# DO NOT EDIT THIS BY HAND
+.*
+node_modules/
+jspm_packages/
+*.log
+npm-debug.log*
+coverage/
+!.micro-build/config.ts
+*.md
+!.micro-build/json-env-data.json
+!.jsonenv/_current_result.json.d.ts
+!.micro-build/npm-install
+!.micro-build/package-json
+!.micro-build/jspm-install
+dist
+### <<< END MICRO-BUILD SECTION
+
 .micro-build
 .git/
 .idea/

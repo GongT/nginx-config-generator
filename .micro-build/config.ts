@@ -11,13 +11,13 @@ declare const build: MicroBuildConfig;
 
 const projectName = 'nginx-config-generator';
 
-build.baseImage('node');
+build.baseImage('node', 'alpine');
 build.projectName(projectName);
 build.domainName(`${projectName}.${JsonEnv.baseDomainName}`);
 
-build.isInChina(JsonEnv.gfw.isInChina);
+build.isInChina(JsonEnv.gfw.isInChina, JsonEnv.gfw);
 build.npmInstallSource(JsonEnv.gfw.npmRegistry.upstream);
-build.install('./package.json');
+build.npmInstall('./package.json');
 
 build.startupCommand('dist/boot.js');
 build.shellCommand('/usr/local/bin/node');
