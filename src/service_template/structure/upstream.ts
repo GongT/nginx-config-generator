@@ -1,5 +1,5 @@
 import {IServiceConfig} from "../../handler";
-import {whoAmI} from "../../../who_am_i/index";
+import {whoAmI} from "../../config";
 export function createUpstream(service: IServiceConfig) {
 	const externals = service.machines.filter((server) => {
 		return server !== whoAmI.id;

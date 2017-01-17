@@ -40,10 +40,22 @@ build.dependService('nginx', 'http://github.com/GongT/nginx-docker.git');
 // can't depend on this:  build.dependService('npm-registry', 'http://github.com/GongT/npm-registry.git');
 build.dockerRunArgument(`--volumes-from=nginx`, "--dns=${HOST_LOOP_IP}");
 
-process.env.DEBUG += ',config:*';
-try {
-	require(require('path').resolve(__dirname, '../who_am_i/index'));
-} catch (e) {
-	console.error(e);
-	process.exit(1);
-}
+build.onConfig(() => {
+	process.env.DEBUG += ',ip:*';
+	try {
+		const resolve = require('path').resolve;
+		const fs = require('fs');
+		
+		const save = resolve(__dirname, '../src/config.ts');
+		const whoAmI = require(resolve(__dirname, '../who_am_i/who_am_i'));
+		const serverMap = require(resolve(__dirname, '../who_am_i/get_server_ip'));
+		
+		fs.writeFileSync(save, `
+export const whoAmI = ${JSON.stringify(whoAmI, null, 4)};
+export const serverMap = ${JSON.stringify(serverMap, null, 4)};
+`, 'utf-8');
+	} catch (e) {
+		console.error(e);
+		process.exit(1);
+	}
+});

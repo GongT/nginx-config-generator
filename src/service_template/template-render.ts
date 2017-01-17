@@ -1,10 +1,10 @@
 import {IServiceConfig} from "../handler";
-import {whoAmI} from "../../who_am_i/index";
 import {createReplacer} from "./renders/create-replacer";
 import {createAllServer} from "./structure/all";
 import {createHttpsServer} from "./structure/https-only";
 import {createHttpServer} from "./structure/http-only";
 import {createUpstream} from "./structure/upstream";
+import {whoAmI} from "../config";
 
 export function generateConfigFile(service: IServiceConfig) {
 	const configFileGlobal = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];

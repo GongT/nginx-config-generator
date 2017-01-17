@@ -17,39 +17,4 @@ typings/
 dist
 ### <<< END MICRO-BUILD SECTION
 
-### START MICRO-BUILD SECTION >>> 
-# DO NOT EDIT THIS BY HAND
-.*
-node_modules/
-jspm_packages/
-*.log
-npm-debug.log*
-coverage/
-!.micro-build/config.ts
-!.*ignore
-dist
-### <<< END MICRO-BUILD SECTION
-
-.git/
-.idea/
-.jsonenv/
-logs/
-*.log
-npm-debug.log*
-pids/
-*.pid
-*.seed
-lib-cov/
-coverage/
-.nyc_output
-.grunt
-.lock-wscript
-build/Release
-node_modules/
-jspm_packages/
-typings/
-.npm
-.node_repl_history
-.micro-build/*
-!.micro-build/config.ts
-dist/
+src/config.ts
