@@ -1,6 +1,9 @@
 import {createPassthru} from "./passthru";
+import {debugFn} from "../template-render";
 export function createBody(arg) {
 	const {service, configMainBody, configFileServer} = arg;
+	
+	debugFn('body: http');
 	
 	return `
 ## createBody

@@ -1,5 +1,8 @@
-import {MicroBuildConfig, EPlugins} from "./x/microbuild-config";
+import {MicroBuildHelper} from "./x/microbuild-helper";
+import {MicroBuildConfig, ELabelNames, EPlugins} from "./x/microbuild-config";
+import {JsonEnv} from "../.jsonenv/_current_result";
 declare const build: MicroBuildConfig;
+declare const helper: MicroBuildHelper;
 /*
  +==================================+
  | <**DON'T EDIT ABOVE THIS LINE**> |
@@ -29,7 +32,7 @@ build.addPlugin(EPlugins.typescript, {
 	target: 'dist',
 });
 
-build.environmentVariableAppend('DEBUG', 'ncg:*,config:*', null, ',');
+build.environmentVariableAppend('DEBUG', 'ncg:*,start,handle,template', null, ',');
 
 build.volume('/etc', './host-etc');
 build.volume('/var/run', './host-var-run');

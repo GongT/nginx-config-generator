@@ -7,20 +7,21 @@ if (global.JsonEnv) {
 	JsonEnv = require('@gongt/jenv-data')();
 }
 
-const serverDefine = JsonEnv.deploy;
-if (!serverDefine || !Object.keys(serverDefine).length) {
+const serverGroupDefine = JsonEnv.deploy;
+if (!serverGroupDefine || !Object.keys(serverGroupDefine).length) {
 	throw new Error('no config.deploy exists');
 }
 
 const serverMap = {};
-Object.keys(serverDefine).forEach((networkGroup) => {
+Object.keys(serverGroupDefine).forEach((networkGroup) => {
 	if (networkGroup === 'forceServerId') {
 		return;
 	}
-	serverDefine[networkGroup].machines.forEach((d) => {
+	serverGroupDefine[networkGroup].machines.forEach((d) => {
 		const serverId = `${d.name}.${networkGroup}`;
 		d.network = networkGroup;
 		d.id = serverId;
+		d.interface = serverGroupDefine[networkGroup].interface;
 		serverMap[serverId] = d;
 	});
 });

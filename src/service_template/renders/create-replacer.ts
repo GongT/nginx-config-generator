@@ -1,6 +1,7 @@
 import {resolve} from "path";
 import {readdirSync, readFileSync} from "fs";
 import {getUpstreamName} from "../structure/upstream";
+import {debugFn} from "../template-render";
 
 export interface PredefinedLocation {
 	global?: (a: any, b: any) => string;
@@ -46,14 +47,16 @@ function compile(text) {
 	try {
 		return eval('(a,b) => { return `' + str + '` }');
 	} catch (e) {
-		console.error('=============\n`%s`\n=============', str)
+		console.error('=============\n`%s`\n=============', str);
 		throw e;
 	}
 }
 
 export function createReplacer(service, configGlobal, configServer, configMainBody) {
 	const isGlobalExists = {};
-	return ({params, type}:{params?: any,type: string}) => {
+	return ({params, type}:{params?: any, type: string}) => {
+		debugFn(`body section: [${type}]: ${JSON.stringify(params, null, 4)}`);
+		
 		if (!predefinedLocationConfigs.hasOwnProperty(type)) {
 			throw new Error(`unknown section type: ${type}, service=${service.serviceName}.`);
 		}

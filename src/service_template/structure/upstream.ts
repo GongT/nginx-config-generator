@@ -1,30 +1,47 @@
 import {IServiceConfig} from "../../handler";
-import {whoAmI} from "../../config";
+import {whoAmI, serverMap} from "../../config";
+import {debugFn} from "../template-render";
 export function createUpstream(service: IServiceConfig) {
-	const externals = service.machines.filter((server) => {
-		return server !== whoAmI.id;
+	debugFn('create upstream: ');
+	let ret = ['### createUpstream', '', `upstream ${getUpstreamName(service)} {`];
+	
+	const localPriority = service.existsCurrentServer? 'backup' : '';
+	const unique: any = {};
+	
+	service.machines.forEach((serverName) => {
+		if (serverName === whoAmI.id) {
+			return false;
+		}
+		const server = serverMap[serverName];
+		if (server.network === whoAmI.network) {
+			debugFn(`  local network: ${server.internal}`);
+			if (!unique[server.internal]) {
+				unique[server.internal] = true;
+				ret.push(`\tserver ${server.internal} weight=100 ${localPriority} fail_timeout=1s; # local network`);
+			}
+		} else {
+			const host = server.external || server.interface;
+			debugFn(`  remote network: ${host}`);
+			if (!unique[host]) {
+				unique[host] = true;
+				ret.push(`\tserver ${host} weight=1 backup fail_timeout=10s; # internet`);
+			}
+		}
 	});
-	let selfLine = '# no self';
+	
 	if (service.existsCurrentServer) {
-		selfLine = `server ${service.serviceName} weight=100 fail_timeout=1s; # <- self`;
-	} else if (externals.length === 0) {
-		selfLine = `server 127.0.0.1:8888 weight=100 fail_timeout=1s; # TRIGGER ERROR`;
+		debugFn(`  self: docker - ${service.existsCurrentServer}`);
+		ret.push(`\tserver ${service.existsCurrentServer} weight=100 fail_timeout=1s; # server in docker`);
+	} else if (0 === Object.keys(unique).length) { // if no remote server exists
+		debugFn(`  Error: no any server available!`);
+		ret.push(`\tserver 127.0.0.1:8888 fail_timeout=1s; # TRIGGER ERROR`);
 	}
 	
-	return `### createUpstream
+	ret.push('}');
 	
-upstream ${getUpstreamName(service)} {
-	${selfLine}
-${service.machines.map((server) => {
-		if (server === whoAmI.id && !service.existsCurrentServer) {
-			return '';
-		}
-		return `    server ${server} weight=10 fail_timeout=5s;`;
-	}).join('\n')}
-}
-`;
+	return ret.join('\n');
 }
 
 export function getUpstreamName(service: IServiceConfig) {
-	return `${service.serviceName}_service_upstream`;
+	return `${service.serverName}_service_upstream`;
 }

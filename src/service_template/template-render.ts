@@ -5,6 +5,12 @@ import {createHttpsServer} from "./structure/https-only";
 import {createHttpServer} from "./structure/http-only";
 import {createUpstream} from "./structure/upstream";
 import {whoAmI} from "../config";
+import * as Debug from "debug";
+const debug = Debug('template');
+
+export function debugFn(str: string) {
+	debug(str.replace(/\n/g, '\n\t  '));
+}
 
 export function generateConfigFile(service: IServiceConfig) {
 	const configFileGlobal = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];
@@ -30,12 +36,16 @@ export function generateConfigFile(service: IServiceConfig) {
 	
 	let body;
 	if (!isInterface(service) || service.SSL === false) {
+		debugFn('create http server: only HTTP.');
 		body = createHttpServer({service, configMainBody, configFileServer});
 	} else if (service.SSL === 'force') {
+		debugFn('create http server: force HTTPS.');
 		body = createHttpsServer({service, configMainBody, configFileServer});
 	} else if (service.SSL === true) {
+		debugFn('create http server: both HTTP & HTTPS.');
 		body = createAllServer({service, configMainBody, configFileServer});
 	} else {
+		debugFn(`unknown SSL option: ${service.SSL}.`);
 		throw new Error('SSL config error?!');
 	}
 	
