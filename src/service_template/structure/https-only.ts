@@ -8,7 +8,7 @@ export function createHttpsServer(arg) {
 	return `
 ### createHttpsServer
 server {
-	server_name ${service.alias.join(' ')};
+	server_name ${service._alias.join(' ')};
 	
 	${createPublicServerSection().replace(/\n/g, '\n\t')}
 	

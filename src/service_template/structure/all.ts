@@ -8,7 +8,7 @@ export function createAllServer(arg) {
 	return `
 #### createAllServer
 server {
-	server_name ${service.alias.join(' ')};
+	server_name ${service._alias.join(' ')};
 	
 	listen 80;
 	listen [::]:80;

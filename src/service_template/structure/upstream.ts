@@ -2,7 +2,7 @@ import {IServiceConfig} from "../../handler";
 import {whoAmI, serverMap} from "../../config";
 import {debugFn} from "../template-render";
 export function createUpstream(service: IServiceConfig) {
-	debugFn('create upstream: ');
+	debugFn(`create upstream for ${service.serverName}: `);
 	let ret = ['### createUpstream', '', `upstream ${getUpstreamName(service)} {`];
 	
 	const localPriority = service.existsCurrentServer? 'backup' : '';

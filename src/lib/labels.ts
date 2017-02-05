@@ -13,7 +13,7 @@ export function getServiceKnownAlias(servName) {
 		return [`${servName}.${baseDomain}`];
 	}
 	const def = JsonEnv.services[servName];
-	const alias: string[] = def['alias'] || [];
+	const alias: string[] = def['_alias'] || [];
 	
 	const outerDomain = `${def.outerSubDomainName || servName}.${baseDomain}`;
 	debugFn(`  service alias: domain - ${outerDomain}`);
@@ -47,7 +47,7 @@ export function getContainerAlias(ins: DockerInspect) {
 		debugFn(`  container alias: not set - no labels`);
 		return [];
 	}
-	let alias: any = ins.Config.Labels['org.special-label.alias'];
+	let alias: any = ins.Config.Labels['org.special-label._alias'];
 	if (!alias) {
 		debugFn(`  container alias: not set - no alias`);
 		return [];

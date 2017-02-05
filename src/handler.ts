@@ -9,6 +9,7 @@ import {createHash} from "crypto";
 import {docker_exec} from "./lib/docker-exec";
 import * as extend from "extend";
 import {existsSync} from "fs";
+import {whoAmI} from "./config";
 const debug_start = Debug('start');
 const debug = Debug('handle');
 
@@ -21,7 +22,8 @@ export interface IServiceConfig {
 	interfaceMachine: string;
 	outerDomainName?: string;
 	existsCurrentServer: string;
-	alias: string[];
+	alias?: string[],
+	_alias: string[];
 }
 
 const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name) => {
@@ -31,6 +33,10 @@ const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name
 	
 	obj.serverName = name;
 	obj.outerDomainName = (obj.outerSubDomainName || name) + '.' + JsonEnv.baseDomainName;
+	if (!obj._alias) {
+		console.error('service %s has no alias.', name);
+		obj._alias = [];
+	}
 	
 	debug_start('registed service [%s]: %s', name, JSON.stringify(obj, null, 4).replace(/\n/g, '\n\t '));
 	
@@ -54,53 +60,44 @@ handleChange((list) => {
 	serviceDefines.forEach((obj) => {
 		if (runningService.hasOwnProperty(obj.serverName)) {
 			obj.existsCurrentServer = runningService[obj.serverName].Config.Hostname;
-			obj.alias = getAllNames(runningService[obj.serverName]);
+			obj._alias = getAllNames(runningService[obj.serverName]);
+			delete runningService[obj.serverName];
 		} else {
 			obj.existsCurrentServer = '';
-			obj.alias = getServiceKnownAlias(obj.serverName);
+			obj._alias = getServiceKnownAlias(obj.serverName);
 		}
 	});
 	
 	const createdFiles = {};
-	let someChange = 0;
 	
 	debug(`creating config files in "${SERVICE_SAVE_FOLDER}".`);
 	serviceDefines.forEach((service: IServiceConfig) => {
 		console.error('');
-		debug('file: %s', `${service.serverName}.conf`);
-		
-		const configFile = resolve(SERVICE_SAVE_FOLDER, `${service.serverName}.conf`);
-		createdFiles[configFile] = true;
-		
 		const content = generateConfigFile(service);
-		const oldHash = existsSync(configFile)? md5(readFileSync(configFile, 'utf-8')) : '';
+		writeFile(createdFiles, service.serverName, content);
+	});
+	
+	Object.keys(runningService).forEach((name) => {
+		console.error('');
+		const container: DockerInspect = runningService[name];
+		const serviceName = getServiceName(container);
 		
-		if (oldHash) {
-			const newHash = md5(content);
-			debug('  hash check:\n\t     old= %s\n\t     new= %s', oldHash, newHash);
-			
-			if (oldHash === newHash) {
-				debug('  file not changed.');
-				debug(`file: ${service.serverName}.conf -- complete`);
-				return;
-			} else {
-				debug('  file changed.');
-				someChange++;
-			}
-		} else {
-			debug('  file not exists.');
-			someChange++;
+		if (!serviceName) {
+			debug(`container name not valid: ${name}`);
 		}
 		
-		try {
-			writeFileSync(configFile, content, 'utf-8');
-			debug('  write complete.');
-		} catch (error) {
-			someChange--;
-			debug('  write file error: \n%s', error.trace);
-		}
+		const fakeService: IServiceConfig = {
+			serverName: serviceName,
+			locations: {},
+			machines: [],
+			SSL: false,
+			interfaceMachine: whoAmI.id,
+			existsCurrentServer: container.Config.Hostname,
+			_alias: getAllNames(container),
+		};
 		
-		debug(`file: ${service.serverName}.conf -- complete`);
+		const content = generateConfigFile(fakeService);
+		writeFile(createdFiles, serviceName, content);
 	});
 	
 	readdirSync(SERVICE_SAVE_FOLDER).forEach((f) => {
@@ -111,17 +108,17 @@ handleChange((list) => {
 		
 		if (!createdFiles.hasOwnProperty(file)) {
 			console.error('removing old unknown file: %s', file);
-			someChange++;
 			try {
 				unlinkSync(file);
 				debug('file removed');
+				createdFiles[file] = true;
 			} catch (e) {
 				debug('remove file error: %s', e.trace);
 			}
 		}
 	});
 	
-	if (process.env.RUN_IN_DOCKER) {
+	if (process.env.RUN_IN_DOCKER && somethingChanged(createdFiles)) {
 		debug('try to restart nginx...');
 		docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-t']).then(([exit, out, err]) => {
 			if (exit === 0) {
@@ -144,6 +141,47 @@ handleChange((list) => {
 	}
 });
 
+function writeFile(storage: {[id: string]: boolean}, filename: string, content: string) {
+	debug('file: %s', `${filename}.conf`);
+	
+	const configFile = resolve(SERVICE_SAVE_FOLDER, `${filename}.conf`);
+	debug(`  location: ${configFile}.`);
+	
+	storage[configFile] = true;
+	
+	const oldHash = existsSync(configFile)? md5(readFileSync(configFile, 'utf-8')) : '';
+	debug(`    old file hash    = ${oldHash}`);
+	
+	if (oldHash) {
+		const newHash = md5(content);
+		debug(`    new content hash = ${oldHash}`);
+		
+		if (oldHash === newHash) {
+			debug('  file not changed.');
+			debug(`file: ${filename}.conf -- complete`);
+			storage[configFile] = false;
+			return;
+		} else {
+			debug('  file changed.');
+		}
+	} else {
+		debug('  file not exists.');
+	}
+	
+	try {
+		writeFileSync(configFile, content, 'utf-8');
+		debug('  write complete.');
+	} catch (error) {
+		debug('  write file error: \n%s', error.trace);
+		storage[configFile] = false;
+	}
+	debug(`file: ${filename}.conf -- complete`);
+}
+
 function md5(str) {
 	return createHash('md5').update(str).digest().toString('hex');
+}
+
+function somethingChanged(obj) {
+	return Object.keys(obj).some(i => obj[i]);
 }

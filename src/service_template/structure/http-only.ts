@@ -9,7 +9,7 @@ export function createHttpServer(arg) {
 	return `
 ### createHttpServer
 server {
-	server_name ${service.alias.join(' ')};
+	server_name ${service._alias.join(' ')};
 	
 	listen 80;
 	listen [::]:80;
