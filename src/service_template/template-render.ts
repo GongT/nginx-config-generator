@@ -36,7 +36,7 @@ export function generateConfigFile(service: IServiceConfig) {
 	
 	let body;
 	if (!isInterface(service) || service.SSL === false) {
-		debugFn('create http server: only HTTP.');
+		debugFn(`create http server: only HTTP (SSL=${service.SSL}).`);
 		body = createHttpServer({service, configMainBody, configFileServer});
 	} else if (service.SSL === 'force') {
 		debugFn('create http server: force HTTPS.');
@@ -57,5 +57,5 @@ ${body}
 }
 
 function isInterface(service: IServiceConfig) {
-	return service.interfaceMachine.indexOf(whoAmI.id) !== -1;
+	return whoAmI['front'];
 }

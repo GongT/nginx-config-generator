@@ -16,3 +16,4 @@ dist/
 ### <<< END MICRO-BUILD SECTION
 
 src/config.ts
+debug_nginx_storage/

@@ -8,6 +8,7 @@ export function createCertBotPass(arg) {
 location /.well-known {
 	root /data/certbot/${service.outerDomainName}/;
 	autoindex on;
+	break;
 }
 `;
 }

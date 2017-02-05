@@ -1,6 +1,6 @@
 import * as Debug from "debug";
 import {handleChange, docker} from "./lib/docker";
-import {getServiceMap, getAllNames} from "./lib/labels";
+import {getAllNames, getServiceName, getServiceKnownAlias} from "./lib/labels";
 import {generateConfigFile} from "./service_template/template-render";
 import {readdirSync, writeFileSync, readFileSync, unlinkSync} from "fs";
 import {SERVICE_SAVE_FOLDER} from "./boot";
@@ -31,14 +31,22 @@ const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name
 	
 	obj.serverName = name;
 	obj.outerDomainName = (obj.outerSubDomainName || name) + '.' + JsonEnv.baseDomainName;
-	if (!obj.alias) {
-		obj.alias = [];
-	}
 	
 	debug_start('registed service [%s]: %s', name, JSON.stringify(obj, null, 4).replace(/\n/g, '\n\t '));
 	
 	return obj;
 });
+
+function getServiceMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
+	const ret = {};
+	list.forEach((ins) => {
+		const name = getServiceName(ins);
+		if (name) {
+			ret[name] = ins;
+		}
+	});
+	return ret;
+}
 
 handleChange((list) => {
 	debug('docker status changed!');
@@ -46,8 +54,10 @@ handleChange((list) => {
 	serviceDefines.forEach((obj) => {
 		if (runningService.hasOwnProperty(obj.serverName)) {
 			obj.existsCurrentServer = runningService[obj.serverName].Config.Hostname;
+			obj.alias = getAllNames(runningService[obj.serverName]);
 		} else {
 			obj.existsCurrentServer = '';
+			obj.alias = getServiceKnownAlias(obj.serverName);
 		}
 	});
 	
