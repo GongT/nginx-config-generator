@@ -1,5 +1,5 @@
 import * as Debug from "debug";
-import {handleChange, docker} from "./lib/docker";
+import {handleChange, docker, connectDocker} from "./lib/docker";
 import {getAllNames, getServiceName, getServiceKnownAlias} from "./lib/labels";
 import {generateConfigFile} from "./service_template/template-render";
 import {readdirSync, writeFileSync, readFileSync, unlinkSync} from "fs";
@@ -53,6 +53,9 @@ function getServiceMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
 	});
 	return ret;
 }
+setTimeout(() => {
+	connectDocker(); // delay 4s to start, wait hosts-generator complete its action.
+}, 4000);
 
 handleChange((list) => {
 	debug('docker status changed!');

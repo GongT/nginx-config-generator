@@ -13,7 +13,7 @@ export const docker = new Dockerode({
 });
 const emitter = new DockerEvents({docker});
 
-let busy = false, t: NodeJS.Timer = null, ot: NodeJS.Timer = null;
+let busy = false, pending = false, t: NodeJS.Timer = null, ot: NodeJS.Timer = null;
 
 // watch
 emitter.on("connect", function () {
@@ -28,7 +28,7 @@ emitter.on("start", function (message) {
 	ot = setTimeout(() => {
 		scheduleGenerate("container started", message.id);
 		ot = null;
-	}, 2000);
+	}, 3000);
 });
 emitter.on("die", function (message) {
 	debug("container stopped: %j", message);
@@ -38,17 +38,26 @@ emitter.on("die", function (message) {
 	ot = setTimeout(() => {
 		scheduleGenerate("container stopped", message.id);
 		ot = null;
-	}, 2000);
+	}, 3000);
 });
 
-debug("connecting to docker api");
-emitter.start();
-// start !
+export function connectDocker() {
+	debug("connecting to docker api");
+	emitter.start();
+}
+export function disconnectDocker() {
+	debug("disconnect from docker api");
+	emitter.stop();
+}
 
 function scheduleGenerate(why, target?) {
 	if (target) {
 		debug('check %s is in building process...', target);
 		docker.getContainer(target).inspect((err, inspect) => {
+			if (err) {
+				debug('%s is stopped, seems it is fail to start, or in fast building process.', target);
+				return;
+			}
 			const text = JSON.stringify(inspect, null, 2);
 			if (/BUILDING['"]?\s*[=:]\s*['"]?yes/.test(text)) {
 				debug('%s is in building process. ignore.', target);
@@ -64,7 +73,7 @@ function scheduleGenerate(why, target?) {
 }
 
 function delayGenerate() {
-	if (t || busy) {
+	if (t) {
 		return;
 	}
 	if (!t) {
@@ -73,13 +82,14 @@ function delayGenerate() {
 			t = null;
 			
 			realDo();
-		}, 2000);
+		}, 3000);
 	}
 }
 
 let cache = {};
 function realDo() {
 	if (busy) {
+		pending = true;
 		return;
 	}
 	
@@ -92,13 +102,21 @@ function realDo() {
 		}
 		re_cache(list);
 		
-		handlers.forEach((cb) => {
-			cb(list);
+		const wait = handlers.map((cb) => {
+			return cb(list);
 		});
+		
+		return Promise.all(wait);
 	}).catch((e) => {
+		busy = false;
 		console.error(e);
+		return true;
+	}).then(() => {
+		busy = false;
+		if (pending) {
+			realDo();
+		}
 	});
-	busy = false;
 }
 
 function re_cache(list: DockerInspect[]) {
@@ -124,6 +142,6 @@ let changeCount = 0;
 
 export function handleChange(cb: Handler) {
 	changeCount++;
-	console.log('docker change count=%s', changeCount);
+	debug('handle docker change (handler count=%s)', changeCount);
 	handlers.push(cb);
 }
