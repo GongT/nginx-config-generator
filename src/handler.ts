@@ -53,8 +53,8 @@ function getServiceMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
 	});
 	return ret;
 }
-setTimeout(() => {
-	connectDocker(); // delay 4s to start, wait hosts-generator complete its action.
+setTimeout(() => { // delay 4s to start, wait hosts-generator complete its action.
+	connectDocker(4000); // wait 4s every action
 }, 4000);
 
 handleChange((list) => {

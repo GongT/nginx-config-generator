@@ -28,7 +28,7 @@ emitter.on("start", function (message) {
 	ot = setTimeout(() => {
 		scheduleGenerate("container started", message.id);
 		ot = null;
-	}, 3000);
+	}, WAIT_TIME);
 });
 emitter.on("die", function (message) {
 	debug("container stopped: %j", message);
@@ -38,10 +38,12 @@ emitter.on("die", function (message) {
 	ot = setTimeout(() => {
 		scheduleGenerate("container stopped", message.id);
 		ot = null;
-	}, 3000);
+	}, WAIT_TIME);
 });
 
-export function connectDocker() {
+let WAIT_TIME;
+export function connectDocker(wait: number) {
+	WAIT_TIME = wait;
 	debug("connecting to docker api");
 	emitter.start();
 }
@@ -54,15 +56,11 @@ function scheduleGenerate(why, target?) {
 	if (target) {
 		debug('check %s is in building process...', target);
 		docker.getContainer(target).inspect((err, inspect) => {
-			if (err) {
-				debug('%s is stopped, seems it is fail to start, or in fast building process.', target);
-				return;
-			}
 			const text = JSON.stringify(inspect, null, 2);
 			if (/BUILDING['"]?\s*[=:]\s*['"]?yes/.test(text)) {
 				debug('%s is in building process. ignore.', target);
 			} else {
-				debug('%s is not in building process. start process.', target);
+				debug('%s is not in building process. start generation.', target);
 				delayGenerate();
 			}
 		});
@@ -77,12 +75,12 @@ function delayGenerate() {
 		return;
 	}
 	if (!t) {
-		debug('wait 2s generate...');
+		debug('wait %ss generate host...', WAIT_TIME / 1000);
 		t = setTimeout(() => {
 			t = null;
 			
 			realDo();
-		}, 3000);
+		}, WAIT_TIME);
 	}
 }
 
