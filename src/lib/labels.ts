@@ -47,7 +47,7 @@ export function getContainerAlias(ins: DockerInspect) {
 		debugFn(`  container alias: not set - no labels`);
 		return [];
 	}
-	let alias: any = ins.Config.Labels['org.special-label._alias'];
+	let alias: any = ins.Config.Labels['org.special-label.alias'];
 	if (!alias) {
 		debugFn(`  container alias: not set - no alias`);
 		return [];
