@@ -6,7 +6,7 @@ const DockerEvents = require("docker-events");
 
 const handlers: Handler[] = [];
 
-const debug = Debug('host:docker');
+const debug = Debug('docker');
 
 export const docker = new Dockerode({
 	socketPath: process.env.RUN_IN_DOCKER? '/data/host-var-run/docker.sock' : '/var/run/docker.sock'

@@ -32,7 +32,7 @@ build.addPlugin(EPlugins.typescript, {
 	target: 'dist',
 });
 
-build.environmentVariableAppend('DEBUG', 'ncg:*,start,handle,template', null, ',');
+build.environmentVariableAppend('DEBUG', 'ncg:*,start,handle,template,docker', null, ',');
 
 build.volume('/etc', './host-etc');
 build.volume('/var/run', './host-var-run');
