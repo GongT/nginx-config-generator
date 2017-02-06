@@ -37,10 +37,8 @@ build.environmentVariableAppend('DEBUG', 'ncg:*,start,handle,template', null, ',
 build.volume('/etc', './host-etc');
 build.volume('/var/run', './host-var-run');
 
-// build.prependDockerFile('/path/to/docker/file');
-// build.appendDockerFile('/path/to/docker/file');
 build.dependService('nginx', 'http://github.com/GongT/nginx-docker.git');
-// can't depend on this:  build.dependService('npm-registry', 'http://github.com/GongT/npm-registry.git');
+build.dependService('hosts-generator', 'http://github.com/GongT/hosts-generator.git');
 build.dockerRunArgument(`--volumes-from=nginx`, "--dns=${HOST_LOOP_IP}");
 
 build.onConfig(() => {
