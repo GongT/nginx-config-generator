@@ -2,12 +2,14 @@
 # DO NOT EDIT THIS BY HAND
 .*
 *.tgz
-node_modules/
-jspm_packages/
+node_modules
+jspm_packages
+**/node_modules
+**/jspm_packages
 *.log
 npm-debug.log*
 coverage/
-typings/
+typings
 !.micro-build
 .micro-build/*
 !.micro-build/config.ts
