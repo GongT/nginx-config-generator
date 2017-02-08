@@ -6,7 +6,7 @@ export function createCertBotPass(arg) {
 	
 	return `###createCertBot
 location /.well-known {
-	root /data/certbot/${service.serverName}/;
+	root /data/certbot-root/${service.serverName}/;
 	autoindex on;
 	break;
 }

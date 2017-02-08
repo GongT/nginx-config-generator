@@ -14,6 +14,7 @@ typings
 .micro-build/*
 !.micro-build/config.ts
 !.*ignore
+!.gitinclude
 dist/
 src/config.ts
 ### <<< END MICRO-BUILD SECTION

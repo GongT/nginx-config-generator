@@ -2,13 +2,13 @@ import {existsSync, writeFileSync} from "fs";
 import {resolve} from "path";
 import {sync as mkdirpSync} from "mkdirp";
 
-const certbotEnabled = existsSync('/data/certbot/');
+const certbotEnabled = existsSync('/data/certbot-root/');
 
 export function createSSL(arg, missingSafe: boolean) {
 	const {service, configMainBody, configFileServer} = arg;
 	
 	if (certbotEnabled) {
-		const exampleFolder = resolve('/data/certbot/', service.serverName, '.well-known');
+		const exampleFolder = resolve('/data/certbot-root/', service.serverName, '.well-known');
 		if (!existsSync(exampleFolder)) {
 			mkdirpSync(exampleFolder);
 		}
@@ -21,7 +21,7 @@ export function createSSL(arg, missingSafe: boolean) {
 </html>`);
 	}
 	
-	const certFile = resolve('/etc/letsencrypt/live', service.outerDomainName, 'privkey.pem');
+	const certFile = resolve('/data/letsencrypt/live', service.outerDomainName, 'privkey.pem');
 	if (!existsSync(certFile)) {
 		if (missingSafe) {
 			return `
@@ -41,9 +41,9 @@ listen [::]:443;
 listen 443 ssl http2;
 listen [::]:443 ssl http2;
 ### location.ssl
-ssl_certificate /etc/letsencrypt/live/${service.outerDomainName}/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/${service.outerDomainName}/privkey.pem;
-ssl_trusted_certificate /etc/letsencrypt/live/${service.outerDomainName}/chain.pem;
+ssl_certificate /data/letsencrypt/live/${service.outerDomainName}/fullchain.pem;
+ssl_certificate_key /data/letsencrypt/live/${service.outerDomainName}/privkey.pem;
+ssl_trusted_certificate /data/letsencrypt/live/${service.outerDomainName}/chain.pem;
 ssl_stapling on;
 ssl_stapling_verify on;
 ssl_session_cache shared:SSL:1m;
