@@ -15,6 +15,7 @@ typings
 !.micro-build/config.ts
 !.*ignore
 dist/
+src/config.ts
 ### <<< END MICRO-BUILD SECTION
 
 src/config.ts
