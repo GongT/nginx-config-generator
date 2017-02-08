@@ -6,10 +6,10 @@ import {resolve, dirname} from "path";
 
 export let CONFIGFILE_PATH;
 if (process.env.RUN_IN_DOCKER) {
-	if (!existsSync('/etc/nginx/nginx.conf')) {
-		throw new Error(`can't start becouse nginx.conf file not found in /etc/nginx. docker link error, or source nginx docker wrong.`);
+	if (!existsSync('/data/config/nginx.conf')) {
+		throw new Error(`can't start becouse nginx.conf file not found in /data/config/nginx. docker link error, or source nginx docker wrong.`);
 	}
-	CONFIGFILE_PATH = '/etc/nginx';
+	CONFIGFILE_PATH = '/data/config';
 } else {
 	CONFIGFILE_PATH = resolve(__dirname, '../debug_nginx_storage');
 }

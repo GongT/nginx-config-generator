@@ -34,7 +34,6 @@ build.addPlugin(EPlugins.typescript, {
 
 build.environmentVariableAppend('DEBUG', 'ncg:*,start,handle,template,docker', null, ',');
 
-build.volume('/etc', './host-etc');
 build.volume('/var/run', './host-var-run');
 
 build.dependService('nginx', 'http://github.com/GongT/nginx-docker.git');
