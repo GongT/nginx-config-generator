@@ -1,6 +1,6 @@
-import {MicroBuildHelper} from "./x/microbuild-helper";
-import {MicroBuildConfig, ELabelNames, EPlugins} from "./x/microbuild-config";
-import {JsonEnv} from "../.jsonenv/_current_result";
+import {MicroBuildHelper} from "./.micro-build/x/microbuild-helper";
+import {MicroBuildConfig, ELabelNames, EPlugins} from "./.micro-build/x/microbuild-config";
+import {JsonEnv} from "./.jsonenv/_current_result";
 declare const build: MicroBuildConfig;
 declare const helper: MicroBuildHelper;
 /*
@@ -46,15 +46,14 @@ build.onConfig(() => {
 		const resolve = require('path').resolve;
 		const fs = require('fs');
 		
-		const to = resolve(__dirname, '../src/config.ts');
-		const whoAmI = require(resolve(__dirname, '../who_am_i/who_am_i'));
-		const serverMap = require(resolve(__dirname, '../who_am_i/get_server_ip'));
+		const whoAmI = require(resolve(__dirname, './who_am_i/who_am_i'));
+		const serverMap = require(resolve(__dirname, './who_am_i/get_server_ip'));
 		
 		const config = helper.createTextFile(`
 export const whoAmI = ${JSON.stringify(whoAmI, null, 4)};
 export const serverMap = ${JSON.stringify(serverMap, null, 4)};
 `);
-		config.save(to);
+		config.save('./src/config.ts');
 	} catch (e) {
 		console.error(e);
 		process.exit(1);

@@ -10,11 +10,7 @@ jspm_packages
 npm-debug.log*
 coverage/
 typings
-!.micro-build
-.micro-build/*
-!.micro-build/config.ts
 !.*ignore
-!.gitinclude
 dist/
 src/config.ts
 ### <<< END MICRO-BUILD SECTION
