@@ -24,6 +24,7 @@ export interface IServiceConfig {
 	existsCurrentServer: string;
 	alias?: string[],
 	_alias: string[];
+	extraBodyString?: string;
 }
 
 const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name) => {
@@ -97,6 +98,7 @@ handleChange((list) => {
 			interfaceMachine: whoAmI.id,
 			existsCurrentServer: container.Config.Hostname,
 			_alias: getAllNames(container),
+			extraBodyString: 'access_log tiny;',
 		};
 		
 		const content = generateConfigFile(fakeService);

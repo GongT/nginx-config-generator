@@ -11,6 +11,9 @@ location / {
 	## extra bodies
 	${configMainBody.join('\n').replace(/\n/g, '\n\t')}
 	
+	## manual set body
+	${(service.extraBodyString || '').replace(/^/g, '\t')}
+	
 	## main bodies
 	${createPassthru(arg).replace(/\n/g, '\n\t')}
 }
