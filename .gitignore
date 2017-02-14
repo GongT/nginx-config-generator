@@ -11,6 +11,7 @@ npm-debug.log*
 coverage/
 typings
 !.*ignore
+!.gitinclude
 dist/
 src/config.ts
 ### <<< END MICRO-BUILD SECTION
