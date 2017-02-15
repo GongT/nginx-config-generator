@@ -77,6 +77,7 @@ function delayGenerate() {
 	if (!t) {
 		debug('wait %ss generate host...', WAIT_TIME / 1000);
 		t = setTimeout(() => {
+			debug('wait timeout reached, start generate');
 			t = null;
 			
 			realDo();
@@ -87,11 +88,13 @@ function delayGenerate() {
 let cache = {};
 function realDo() {
 	if (busy) {
+		console.error('generator busy. stop.');
 		pending = true;
 		return;
 	}
 	
 	busy = true;
+	console.error('generator started.');
 	docker_list_containers(docker).then((containers) => {
 		return docker_inspect_all(docker, containers);
 	}).then((list: DockerInspect[]) => {
@@ -104,16 +107,24 @@ function realDo() {
 			return cb(list);
 		});
 		
-		return Promise.all(wait);
-	}).catch((e) => {
-		busy = false;
-		console.error(e);
-		return true;
+		const pWait = Promise.all(wait);
+		let t = setTimeout(() => {
+			t = null;
+			console.error('------ generator not response in 10 seconds ------')
+		}, 10000);
+		pWait.then(() => t && clearTimeout(t), () => t && clearTimeout(t));
+		
+		return pWait;
 	}).then(() => {
 		busy = false;
 		if (pending) {
-			realDo();
+			console.log('pending... prepare next generation.');
+			setImmediate(realDo);
 		}
+	}, (e) => {
+		busy = false;
+		console.error('generate error: ', e);
+		return true;
 	});
 }
 
@@ -133,7 +144,7 @@ function cache_equal(list: DockerInspect[]) {
 }
 
 export interface Handler {
-	(allDockers: DockerInspect[]): void;
+	(allDockers: DockerInspect[]): void|Promise<any>;
 }
 
 let changeCount = 0;
