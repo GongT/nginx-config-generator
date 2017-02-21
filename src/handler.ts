@@ -1,17 +1,19 @@
 import * as Debug from "debug";
+import {NotifyInitCompleteEvent, InitFailQuit} from "typescript-common-library/server/boot/service-control";
 import {handleChange, docker, connectDocker} from "./lib/docker";
 import {getAllNames, getServiceName, getServiceKnownAlias} from "./lib/labels";
 import {generateConfigFile} from "./service_template/template-render";
-import {readdirSync, writeFileSync, readFileSync, unlinkSync} from "fs";
+import {readdirSync, writeFileSync, readFileSync, unlinkSync, existsSync} from "fs";
 import {SERVICE_SAVE_FOLDER} from "./boot";
 import {resolve} from "path";
 import {createHash} from "crypto";
 import {docker_exec} from "./lib/docker-exec";
 import * as extend from "extend";
-import {existsSync} from "fs";
 import {whoAmI} from "./config";
 const debug_start = Debug('start');
 const debug = Debug('handle');
+
+let inited = false;
 
 export interface IServiceConfig {
 	serverName: string;
@@ -133,15 +135,28 @@ handleChange((list) => {
 						console.log('\x1B[38;5;10m>>> nginx reload success. \x1B[0m');
 					} else {
 						console.log('\x1B[38;5;9m>>> nginx reload failed. \x1B[0m')
+						throw new Error('nginx reload error');
 					}
 				}).catch((e) => {
 					console.error('Docker Exec failed: ', e);
+					throw e;
 				});
 			} else {
 				console.log('\x1B[38;5;9m>>> nginx config has error. \x1B[0m')
+				throw new Error('nginx config error');
+			}
+		}).then(() => {
+			if (!inited) {
+				inited = true;
+				NotifyInitCompleteEvent();
 			}
 		}).catch((e) => {
 			console.error('Docker Exec failed: ', e);
+			
+			if (!inited) {
+				inited = true;
+				InitFailQuit();
+			}
 		});
 	}
 });

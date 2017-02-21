@@ -1,5 +1,5 @@
 import {MicroBuildHelper} from "./.micro-build/x/microbuild-helper";
-import {MicroBuildConfig, ELabelNames, EPlugins} from "./.micro-build/x/microbuild-config";
+import {MicroBuildConfig, EPlugins} from "./.micro-build/x/microbuild-config";
 import {JsonEnv} from "./.jsonenv/_current_result";
 declare const build: MicroBuildConfig;
 declare const helper: MicroBuildHelper;
@@ -20,8 +20,9 @@ build.domainName(`${projectName}.${JsonEnv.baseDomainName}`);
 
 build.isInChina(JsonEnv.gfw.isInChina, JsonEnv.gfw);
 build.npmInstallSource(JsonEnv.gfw.npmRegistry.upstream);
-build.npmInstall('./package.json');
+build.npmInstall('./package.json', ['git', 'python', 'g++', 'make']);
 
+build.systemdType('notify');
 build.startupCommand('dist/boot.js');
 build.shellCommand('/usr/local/bin/node');
 // build.stopCommand('stop.sh');

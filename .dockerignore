@@ -15,11 +15,11 @@ Dockerfile
 *.Dockerfile
 !.micro-build/json-env-data.json
 !.jsonenv/_current_result.json.d.ts
-!.micro-build/npm-install
-!.micro-build/bin
-!.micro-build/package-json
-!.micro-build/jspm-install
-!.micro-build/plugins
+!.micro-build/docker/bin
+!.micro-build/docker/jspm-install
+!.micro-build/docker/npm-install
+!.micro-build/docker/package-json
+!.micro-build/docker/plugins
 dist/
 ### <<< END MICRO-BUILD SECTION
 
