@@ -127,10 +127,10 @@ handleChange((list) => {
 	
 	if (process.env.RUN_IN_DOCKER && somethingChanged(createdFiles)) {
 		debug('try to restart nginx...');
-		docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-t']).then(([exit, out, err]) => {
+		docker_exec(docker, 'nginx', ['nginx', '-t']).then(([exit, out, err]) => {
 			if (exit === 0) {
 				console.log('\x1B[38;5;10m>>> nginx config test success. \x1B[0m');
-				docker_exec(docker, 'nginx', ['/usr/sbin/nginx', '-s', 'reload']).then(([exit, out, err]) => {
+				docker_exec(docker, 'nginx', ['nginx', '-s', 'reload']).then(([exit, out, err]) => {
 					if (exit === 0) {
 						console.log('\x1B[38;5;10m>>> nginx reload success. \x1B[0m');
 					} else {
