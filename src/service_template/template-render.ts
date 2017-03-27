@@ -26,12 +26,28 @@ export function generateConfigFile(service: IServiceConfig) {
 	}
 	
 	Object.keys(service.locations).map((location) => {
-		createServerSection({
-			type: service.locations[location],
-			params: {
-				location
-			},
-		});
+		const conf = service.locations[location];
+		if (typeof conf === 'string') {
+			createServerSection({
+				type: conf,
+				params: {
+					location
+				},
+			});
+		} else {
+			if (!conf.options) {
+				conf.options = {};
+			}
+			if (conf.location) {
+				location = conf.location;
+			}
+			createServerSection({
+				type: conf.type,
+				params: Object.assign(conf.options, {
+					location
+				}),
+			});
+		}
 	});
 	
 	let body;

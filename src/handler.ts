@@ -15,9 +15,17 @@ const debug = Debug('handle');
 
 let inited = false;
 
+export interface LocationDefine {
+	type: string;
+	location?: string;
+	options?: {
+		[key: string]: any;
+	};
+}
+
 export interface IServiceConfig {
 	serverName: string;
-	locations: {[path: string]: string};
+	locations: {[path: string]: string | LocationDefine};
 	machines: string[];
 	SSL: boolean | 'force';
 	outerSubDomainName?: string;
