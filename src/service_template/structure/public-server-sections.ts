@@ -30,6 +30,6 @@ if ( $http_x_proxy_path ~ /->${escapeRegExp(whoAmI.id)}($|->)/ ) {
 	return 508 $http_x_proxy_path;
 }
 proxy_set_header X-Proxy-Path "$http_x_proxy_path->${whoAmI.id}";
-proxy_set_header X-Proxy-Request-Id $request_id always;
+proxy_set_header X-Proxy-Request-Id $request_id;
 `;
 }
