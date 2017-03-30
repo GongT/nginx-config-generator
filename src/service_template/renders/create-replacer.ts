@@ -62,14 +62,10 @@ export function createReplacer(service, configGlobal, configServer, configMainBo
 		}
 		const predef: PredefinedLocation = predefinedLocationConfigs[type];
 		
-		const args = {
+		const args = Object.assign({
 			configMainBody: configMainBody,
 			upstream: getUpstreamName(service),
-		};
-		
-		if (params) {
-			Object.assign(args, params);
-		}
+		}, params);
 		
 		try {
 			if (predef.global && !isGlobalExists[type]) {

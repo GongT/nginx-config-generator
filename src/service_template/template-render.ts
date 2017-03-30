@@ -43,7 +43,7 @@ export function generateConfigFile(service: IServiceConfig) {
 			}
 			createServerSection({
 				type: conf.type,
-				params: Object.assign(conf.options, {
+				params: Object.assign(conf, {
 					location
 				}),
 			});
