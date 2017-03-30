@@ -1,7 +1,7 @@
 import {getUpstreamName} from "./upstream";
 import {whoAmI} from "../../config";
 
-function escapeRegExp(str) {
+export function escapeRegExp(str) {
 	return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 

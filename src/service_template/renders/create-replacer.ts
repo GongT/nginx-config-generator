@@ -2,6 +2,8 @@ import {resolve} from "path";
 import {readdirSync, readFileSync} from "fs";
 import {getUpstreamName} from "../structure/upstream";
 import {debugFn} from "../template-render";
+import {whoAmI} from "../../config";
+import {escapeRegExp} from "../structure/public-server-sections";
 
 export interface PredefinedLocation {
 	global?: (a: any, b: any) => string;
@@ -42,13 +44,23 @@ readdirSync(TEMPLATE_PATH).forEach((fullFileName) => {
 
 function compile(text) {
 	const str = text
-		.replace(/\$\{([^.])/g, '${b.$1')
+		.replace(/\$\{([a-zA-Z0-9_])/g, '${b.$1')
 		.replace(/\$\{\./g, '${a.');
+	let fn;
 	try {
-		return eval('(a,b) => { return `' + str + '` }');
+		fn = eval('(a,b,$whoAmI) => { return `' + str + '` }');
 	} catch (e) {
 		console.error('=============\n`%s`\n=============', str);
 		throw e;
+	}
+	
+	return (a, b) => {
+		try {
+			return fn(a, Object.assign({escapeRegExp}, b), whoAmI);
+		} catch (e) {
+			console.error('=============\n`%s`\n=============', str);
+			throw e;
+		}
 	}
 }
 
@@ -79,7 +91,8 @@ export function createReplacer(service, configGlobal, configServer, configMainBo
 				configMainBody.push(predef.body(service, args));
 			}
 		} catch (e) {
-			throw new Error(`parse location failed: ${type}, params=${args}, service=${service.serviceName}.`)
+			throw new Error(`parse location failed: ${type}, params=${args}, service=${service.serviceName}.
+${e.message}`)
 		}
 	}
 }
