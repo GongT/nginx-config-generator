@@ -1,9 +1,9 @@
 import * as Debug from "debug";
-import {NotifyInitCompleteEvent, InitFailQuit} from "typescript-common-library/server/boot/service-control";
-import {handleChange, docker, connectDocker} from "./lib/docker";
-import {getAllNames, getServiceName, getServiceKnownAlias} from "./lib/labels";
+import {InitFailQuit, NotifyInitCompleteEvent} from "typescript-common-library/server/boot/service-control";
+import {connectDocker, docker, handleChange} from "./lib/docker";
+import {getAllNames, getServiceKnownAlias, getServiceName} from "./lib/labels";
 import {generateConfigFile} from "./service_template/template-render";
-import {readdirSync, writeFileSync, readFileSync, unlinkSync, existsSync} from "fs";
+import {existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync} from "fs";
 import {SERVICE_SAVE_FOLDER} from "./boot";
 import {resolve} from "path";
 import {createHash} from "crypto";
@@ -25,9 +25,9 @@ export interface LocationDefine {
 
 export interface IServiceConfig {
 	serverName: string;
-	locations: {[path: string]: string | LocationDefine};
+	locations: {[path: string]: string|LocationDefine};
 	machines: string[];
-	SSL: boolean | 'force';
+	SSL: boolean|'force';
 	outerSubDomainName?: string;
 	interfaceMachine: string;
 	outerDomainName?: string;
@@ -66,7 +66,7 @@ function getServiceMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
 }
 setTimeout(() => { // delay 4s to start, wait hosts-generator complete its action.
 	connectDocker(4000); // wait 4s every action
-}, 4000);
+}, process.env.RUN_IN_DOCKER? 4000 : 50);
 
 handleChange((list) => {
 	debug('docker status changed!');

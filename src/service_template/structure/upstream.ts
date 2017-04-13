@@ -1,5 +1,5 @@
 import {IServiceConfig} from "../../handler";
-import {whoAmI, serverMap} from "../../config";
+import {serverMap, whoAmI} from "../../config";
 import {debugFn} from "../template-render";
 export function createUpstream(service: IServiceConfig) {
 	debugFn(`create upstream for ${service.serverName}: `);
@@ -14,6 +14,9 @@ export function createUpstream(service: IServiceConfig) {
 			return; // the current server
 		}
 		const server = serverMap[serverName];
+		if (!server) {
+			throw new Error(`failed: ${service.serverName}, no this server: ${serverName}`);
+		}
 		if (server.network === whoAmI.network) {
 			debugFn(`  local network: ${server.internal}`);
 			unique[server.internal] = `server ${server.internal} weight=100 ${localPriority} fail_timeout=1s; # local network`;
