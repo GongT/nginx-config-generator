@@ -19,6 +19,11 @@ if (!existsSync(SERVICE_SAVE_FOLDER)) {
 	mkdirSync(SERVICE_SAVE_FOLDER);
 }
 
+export const SERVER_SAVE_FOLDER = resolve(CONFIGFILE_PATH, 'servers.d');
+if (!existsSync(SERVER_SAVE_FOLDER)) {
+	mkdirSync(SERVER_SAVE_FOLDER);
+}
+
 export const LOADER_PATH = resolve(CONFIGFILE_PATH, 'conf.d/generated.conf');
 if (!existsSync(dirname(LOADER_PATH))) {
 	mkdirSync(dirname(LOADER_PATH));

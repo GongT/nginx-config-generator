@@ -2,10 +2,10 @@ import * as Debug from "debug";
 import {InitFailQuit, NotifyInitCompleteEvent} from "typescript-common-library/server/boot/service-control";
 import {connectDocker, docker, handleChange} from "./lib/docker";
 import {getAllNames, getServiceKnownAlias, getServiceName} from "./lib/labels";
-import {generateConfigFile} from "./service_template/template-render";
+import {generateConfigFile, generateServerFile} from "./service_template/template-render";
 import {existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync} from "fs";
-import {SERVICE_SAVE_FOLDER} from "./boot";
-import {resolve} from "path";
+import {SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "./boot";
+import {basename, resolve} from "path";
 import {createHash} from "crypto";
 import {docker_exec} from "./lib/docker-exec";
 import * as extend from "extend";
@@ -22,10 +22,14 @@ export interface LocationDefine {
 		[key: string]: any;
 	};
 }
+export interface StreamDefine {
+	port: number;
+}
 
 export interface IServiceConfig {
 	serverName: string;
 	locations: {[path: string]: string|LocationDefine};
+	servers?: {[ports: string]: StreamDefine};
 	machines: string[];
 	SSL: boolean|'force';
 	outerSubDomainName?: string;
@@ -83,12 +87,20 @@ handleChange((list) => {
 	});
 	
 	const createdFiles = {};
+	const createdFilesServers = {};
 	
 	debug(`creating config files in "${SERVICE_SAVE_FOLDER}".`);
 	serviceDefines.forEach((service: IServiceConfig) => {
 		console.error('');
 		const content = generateConfigFile(service);
 		writeFile(createdFiles, service.serverName, content);
+		
+		if (service.servers) {
+			const serverContent = generateServerFile(service);
+			if (serverContent) {
+				writeServerFile(createdFilesServers, service.serverName, serverContent);
+			}
+		}
 	});
 	
 	Object.keys(runningService).forEach((name) => {
@@ -115,25 +127,11 @@ handleChange((list) => {
 		writeFile(createdFiles, serviceName, content);
 	});
 	
-	readdirSync(SERVICE_SAVE_FOLDER).forEach((f) => {
-		if (f === '.' || f === '..') {
-			return;
-		}
-		const file = resolve(SERVICE_SAVE_FOLDER, f);
-		
-		if (!createdFiles.hasOwnProperty(file)) {
-			console.error('removing old unknown file: %s', file);
-			try {
-				unlinkSync(file);
-				debug('file removed');
-				createdFiles[file] = true;
-			} catch (e) {
-				debug('remove file error: %s', e.trace);
-			}
-		}
-	});
+	removeUnusedFiles(SERVICE_SAVE_FOLDER, createdFiles);
+	removeUnusedFiles(SERVER_SAVE_FOLDER, createdFilesServers);
+	const anyChange = somethingChanged(createdFiles) || somethingChanged(createdFilesServers);
 	
-	if (process.env.RUN_IN_DOCKER && somethingChanged(createdFiles)) {
+	if (process.env.RUN_IN_DOCKER && anyChange) {
 		debug('try to restart nginx...');
 		docker_exec(docker, 'nginx', ['nginx', '-t']).then(([exit, out, err]) => {
 			if (exit === 0) {
@@ -170,9 +168,16 @@ handleChange((list) => {
 });
 
 function writeFile(storage: {[id: string]: boolean}, filename: string, content: string) {
-	debug('file: %s', `${filename}.conf`);
-	
 	const configFile = resolve(SERVICE_SAVE_FOLDER, `${filename}.conf`);
+	return writeFileAbs(storage, configFile, content);
+}
+function writeServerFile(storage: {[id: string]: boolean}, filename: string, content: string) {
+	const configFile = resolve(SERVER_SAVE_FOLDER, `${filename}.conf`);
+	return writeFileAbs(storage, configFile, content);
+}
+
+function writeFileAbs(storage: {[id: string]: boolean}, configFile: string, content: string) {
+	debug('file: %s', basename(configFile));
 	debug(`  location: ${configFile}.`);
 	
 	storage[configFile] = true;
@@ -186,7 +191,7 @@ function writeFile(storage: {[id: string]: boolean}, filename: string, content: 
 		
 		if (oldHash === newHash) {
 			debug('  file not changed.');
-			debug(`file: ${filename}.conf -- complete`);
+			debug(`file: ${configFile} -- complete`);
 			storage[configFile] = false;
 			return;
 		} else {
@@ -203,7 +208,7 @@ function writeFile(storage: {[id: string]: boolean}, filename: string, content: 
 		debug('  write file error: \n%s', error.trace);
 		storage[configFile] = false;
 	}
-	debug(`file: ${filename}.conf -- complete`);
+	debug(`file: ${configFile} -- complete`);
 }
 
 function md5(str) {
@@ -212,4 +217,23 @@ function md5(str) {
 
 function somethingChanged(obj) {
 	return Object.keys(obj).some(i => obj[i]);
+}
+function removeUnusedFiles(root: string, changedFiles: {[absFile: string]: boolean}) {
+	readdirSync(root).forEach((f) => {
+		if (f === '.' || f === '..') {
+			return;
+		}
+		const file = resolve(root, f);
+		
+		if (!changedFiles.hasOwnProperty(file)) {
+			console.error('removing old unknown file: %s', file);
+			try {
+				unlinkSync(file);
+				debug('file removed');
+				changedFiles[file] = true;
+			} catch (e) {
+				debug('remove file error: %s', e.trace);
+			}
+		}
+	});
 }

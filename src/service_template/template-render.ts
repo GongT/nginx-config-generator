@@ -3,7 +3,7 @@ import {createReplacer} from "./renders/create-replacer";
 import {createAllServer} from "./structure/all";
 import {createHttpsServer} from "./structure/https-only";
 import {createHttpServer} from "./structure/http-only";
-import {createUpstream} from "./structure/upstream";
+import {createUpstream, getUpstreamName} from "./structure/upstream";
 import {whoAmI} from "../config";
 import * as Debug from "debug";
 const debug = Debug('template');
@@ -12,7 +12,33 @@ export function debugFn(str: string) {
 	debug(str.replace(/\n/g, '\n\t  '));
 }
 
-export function generateConfigFile(service: IServiceConfig) {
+export function generateServerFile(service: IServiceConfig): string {
+	const created = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];
+	
+	const notEmpty = Object.keys(service.servers).some((port) => {
+		const def = service.servers[port];
+		if (!def) {
+			return false;
+		}
+		const proxyPort = def.port;
+		
+		created.push(createUpstream(service, proxyPort));
+		created.push(`## proxy ${port}
+server {
+	listen ${port} ;
+	proxy_pass ${getUpstreamName(service, proxyPort)};
+}
+`);
+		
+		return true;
+	});
+	
+	if (notEmpty) {
+		return created.join('\n');
+	}
+}
+
+export function generateConfigFile(service: IServiceConfig): string {
 	const configFileGlobal = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];
 	const configFileServer = ['### server bodies '];
 	const configMainBody = [];

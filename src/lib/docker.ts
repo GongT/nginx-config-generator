@@ -7,6 +7,7 @@ const DockerEvents = require("docker-events");
 const handlers: Handler[] = [];
 
 const debug = Debug('docker');
+const gen_log = Debug('gen');
 
 export const docker = new Dockerode({
 	socketPath: process.env.RUN_IN_DOCKER? '/data/host-var-run/docker.sock' : '/var/run/docker.sock'
@@ -88,17 +89,18 @@ function delayGenerate() {
 let cache = {};
 function realDo() {
 	if (busy) {
-		console.error('generator busy. stop.');
+		gen_log('generator busy. stop.');
 		pending = true;
 		return;
 	}
 	
 	busy = true;
-	console.error('generator started.');
+	gen_log('generator started.');
 	docker_list_containers(docker).then((containers) => {
 		return docker_inspect_all(docker, containers);
 	}).then((list: DockerInspect[]) => {
 		if (cache_equal(list)) {
+			gen_log('nothing changed');
 			return;
 		}
 		re_cache(list);
@@ -110,7 +112,7 @@ function realDo() {
 		const pWait = Promise.all(wait);
 		let t = setTimeout(() => {
 			t = null;
-			console.error('------ generator not response in 10 seconds ------')
+			gen_log('------ generator not response in 10 seconds ------')
 		}, 10000);
 		pWait.then(() => t && clearTimeout(t), () => t && clearTimeout(t));
 		
@@ -118,12 +120,13 @@ function realDo() {
 	}).then(() => {
 		busy = false;
 		if (pending) {
-			console.log('pending... prepare next generation.');
+			gen_log('pending... prepare next generation.');
 			setImmediate(realDo);
 		}
+		gen_log('generator stopped.');
 	}, (e) => {
 		busy = false;
-		console.error('generate error: ', e);
+		gen_log('generator error: ' + e.message);
 		return true;
 	});
 }
