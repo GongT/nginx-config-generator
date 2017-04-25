@@ -15,13 +15,16 @@ export function debugFn(str: string) {
 export function generateServerFile(service: IServiceConfig): string {
 	const created = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];
 	
-	const notEmpty = Object.keys(service.servers).some((port) => {
+	debug('server config: %s', service.serverName);
+	const notEmpty = Object.keys(service.servers).forEach((port) => {
+		console.log('  port: %s', port);
 		const def = service.servers[port];
 		if (!def) {
-			return false;
+			console.log('  Error: no config', service);
+			throw new Error('server no config in service ' + service.serverName);
 		}
 		const proxyPort = def.port;
-		
+		console.log('  proxy to: %s', proxyPort);
 		created.push(createUpstream(service, proxyPort));
 		created.push(`## proxy ${port}
 server {
