@@ -13,10 +13,10 @@ export function debugFn(str: string) {
 }
 
 export function generateServerFile(service: IServiceConfig): string {
-	const created = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];
+	const created = [];
 	
 	debug('server config: %s', service.serverName);
-	const notEmpty = Object.keys(service.servers).forEach((port) => {
+	Object.keys(service.servers).forEach((port) => {
 		console.log('  port: %s', port);
 		const def = service.servers[port];
 		if (!def) {
@@ -36,7 +36,8 @@ server {
 		return true;
 	});
 	
-	if (notEmpty) {
+	if (created.length) {
+		created.unshift('###   GENERATED FILE ; DO NOT MODIFY   ###\n');
 		return created.join('\n');
 	}
 }
