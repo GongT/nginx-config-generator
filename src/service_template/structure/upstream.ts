@@ -1,59 +1,118 @@
 import {IServiceConfig} from "../../handler";
 import {serverMap, whoAmI} from "../../config";
-import {debugFn} from "../template-render";
-export function createUpstream(service: IServiceConfig, overwritePort?: number) {
-	debugFn(`create upstream for ${service.serverName}: `);
-	let ret = ['### createUpstream', '', `upstream ${getUpstreamName(service, overwritePort)} {`];
+import {debugFn, isGateway} from "../template-render";
+
+const isMe = serverName => serverName === whoAmI.id;
+const isNotMe = serverName => serverName !== whoAmI.id;
+const getServer = serverName => {
+	const server = serverMap[serverName];
+	if (!server) {
+		throw new Error(`failed: ${serverName}, no this server: ${serverName}`);
+	}
+	return server;
+};
+const sameNetwork = serverName => {
+	const server = getServer(serverName);
+	return server.network === whoAmI.network;
+};
+
+class upstreamCreator {
+	private readonly upName: string;
+	private ret: string[];
+	private readonly isGateway: boolean;
+	private readonly upPort: number;
+	private readonly appPort: number;
+	private readonly wantServiceToRun: boolean;
+	private readonly serviceDockerRunning: boolean;
 	
-	const localPriority = service.existsCurrentServer? 'backup' : '';
-	const unique: any = {};
-	let anyLocalServer = !!service.existsCurrentServer;
-	const port = overwritePort? ':' + overwritePort : '';
-	
-	service.machines.forEach((serverName) => {
-		if (serverName === whoAmI.id) {
-			return; // the current server
-		}
-		const server = serverMap[serverName];
-		if (!server) {
-			throw new Error(`failed: ${service.serverName}, no this server: ${serverName}`);
-		}
-		if (server.network === whoAmI.network) {
-			debugFn(`  local network: ${server.internal}`);
-			unique[server.internal] = `server ${server.internal}${port} weight=100 ${localPriority} fail_timeout=1s; # local network`;
-			anyLocalServer = anyLocalServer || (localPriority !== 'backup');
+	constructor(private service: IServiceConfig,
+		private direction: 'up'|'down',
+		private overwritePort: number = 80) {
+		this.serviceDockerRunning = !!service.existsCurrentServer;
+		this.wantServiceToRun = service.machines.some(isMe);
+		this.isGateway = isGateway(this.service);
+		this.upPort = this.appPort = parseInt('' + overwritePort);
+		if (direction === 'down') {
+			this.upPort++;
+			this.upName = getUpstreamNameDown(this.service, this.overwritePort)
 		} else {
-			const host = server.external || server.interface;
-			debugFn(`  remote network: ${host}`);
-			if (!unique[host]) {
-				unique[host] = `server ${host}${port} weight=1 backup fail_timeout=10s; # internet`;
-			}
+			this.upName = getUpstreamNameUp(this.service, this.overwritePort)
 		}
-	});
-	
-	if (service.existsCurrentServer) {
-		debugFn(`  self: docker - ${service.existsCurrentServer}`);
-		ret.push(`\tserver ${service.existsCurrentServer}${port} weight=100 fail_timeout=1s; # server in docker`);
-		anyLocalServer = true;
-	} else if (0 === Object.keys(unique).length) { // if no remote server exists
-		debugFn(`  Error: no any server available!`);
-		ret.push(`\tserver 127.0.0.1:8888 fail_timeout=1s; # TRIGGER ERROR`);
 	}
 	
-	if (!anyLocalServer) { // all server is internet, so each line have a "backup"
-		Object.keys(unique).forEach((index) => {
-			unique[index] = unique[index].replace(/ backup /, ' ');
+	create() {
+		this.ret = ['### createUpstream', `upstream ${this.upName} {`];
+		debugFn(`create upstream:${this.direction} for ${this.service.serverName}:${this.appPort} `);
+		
+		if (this.serviceDockerRunning) {
+			this.pushSelf();
+			this.pushAllLocal(!this.isGateway);
+		} else if (this.wantServiceToRun) {
+			if (this.direction === 'down') {
+				this.pushFail(false);
+			} else {
+				this.pushGateway();
+				this.pushFail();
+			}
+		} else {
+			this.pushAllLocal(false);
+			this.pushFail();
+		}
+		
+		this.ret.push('}');
+		
+		return this.ret.join('\n');
+	}
+	
+	private pushSelf() {
+		debugFn(`  self: docker - ${this.service.existsCurrentServer}`);
+		this.ret.push(`\t# self: docker - ${this.service.existsCurrentServer}`);
+		this.ret.push(`\tserver ${this.service.existsCurrentServer}:${this.appPort} weight=200 fail_timeout=1s; # server in docker`);
+	}
+	
+	private pushAllLocal(backup: boolean) {
+		this.service.machines.filter(isNotMe)
+		    .forEach((serverName) => this.pushLocal(serverName, backup));
+	}
+	
+	private pushLocal(serverName, backup: boolean) {
+		const server = getServer(serverName);
+		debugFn(`  local network: ${server.internal}`);
+		this.ret.push(`\t# local network: ${server.internal}`);
+		this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 5 : 1}s; # local network`)
+	};
+	
+	private pushFail(backup: boolean = true) {
+		debugFn(`  add fail safe`);
+		this.ret.push(`\t# fail safe`);
+		this.ret.push(`\tserver 127.0.0.1:8888 ${backup? 'backup' : ''} fail_timeout=1s; # TRIGGER ERROR`);
+	}
+	
+	private pushGateway(backup: boolean = false) {
+		const d = this.service.interfaceMachine.filter(isNotMe).filter(sameNetwork);
+		d.forEach((serverName) => {
+			const server = getServer(serverName);
+			debugFn(`  gateway upstream: ${server.internal}`);
+			this.ret.push(`\t# gateway upstream: ${server.internal}`);
+			this.ret.push(`\tserver ${server.internal}:${this.upPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 5 : 1}s; # local network`)
 		});
-	}
-	Object.values(unique).forEach((value) => {
-		ret.push(`\t${value}`);
-	});
-	
-	ret.push('}');
-	
-	return ret.join('\n');
+		return d.length;
+	};
 }
 
-export function getUpstreamName(service: IServiceConfig, overwritePort?: number) {
-	return `${service.serverName}_service_upstream${overwritePort? '_' + overwritePort : ''}`;
+export function createUpstreamUp(service: IServiceConfig, overwritePort?: number) {
+	const builder = new upstreamCreator(service, 'up', overwritePort);
+	return builder.create();
+}
+
+export function createUpstreamDown(service: IServiceConfig, overwritePort?: number) {
+	const builder = new upstreamCreator(service, 'down', overwritePort);
+	return builder.create();
+}
+
+export function getUpstreamNameDown(service: IServiceConfig, overwritePort: number = 80) {
+	return `${service.serverName}_service_upstream_down${overwritePort? '_' + overwritePort : ''}`;
+}
+export function getUpstreamNameUp(service: IServiceConfig, overwritePort: number = 80) {
+	return `${service.serverName}_service_upstream_up${overwritePort? '_' + overwritePort : ''}`;
 }

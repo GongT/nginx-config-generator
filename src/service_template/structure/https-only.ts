@@ -14,13 +14,13 @@ server {
 	
 	${createSSL(arg, true).replace(/\n/g, '\n\t')}
     
-    ${createBody(arg).replace(/\n/g, '\n\t')}
+    ${createBody(arg, 'down').replace(/\n/g, '\n\t')}
 }
 server { # http jump in https server
 	server_name ${service.outerDomainName};
 	
-	listen 80;
-	listen [::]:80;
+	listen 81;
+	listen [::]:81;
 	
 	${createCertBotPass(arg).replace(/\n/g, '\n\t')}
 	

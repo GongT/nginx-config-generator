@@ -1,9 +1,11 @@
-import {getUpstreamName} from "./upstream";
+import {getUpstreamNameDown, getUpstreamNameUp} from "./upstream";
 
-export function createPassthru(arg) {
+export function createPassthru(arg, direction: 'up'|'down') {
 	const {service, configMainBody, configFileServer} = arg;
 	
-	const upstream = getUpstreamName(service);
+	const upstream = direction === 'down'
+		? getUpstreamNameDown(service)
+		: getUpstreamNameUp(service);
 	
 	return `
 ## upstream config

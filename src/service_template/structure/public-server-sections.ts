@@ -1,4 +1,3 @@
-import {getUpstreamName} from "./upstream";
 import {whoAmI} from "../../config";
 
 export function escapeRegExp(str) {

@@ -1,6 +1,6 @@
 import {createPassthru} from "./passthru";
 import {debugFn} from "../template-render";
-export function createBody(arg) {
+export function createBody(arg, direction: 'up'|'down') {
 	const {service, configMainBody, configFileServer} = arg;
 	
 	debugFn('body: http');
@@ -15,7 +15,7 @@ location / {
 	${(service.extraBodyString || '').replace(/^/g, '\t')}
 	
 	## main bodies
-	${createPassthru(arg).replace(/\n/g, '\n\t')}
+	${createPassthru(arg, direction).replace(/\n/g, '\n\t')}
 }
 ## extraBodies
 ${configFileServer.join('\n').replace(/\n/g, '\n')}

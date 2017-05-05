@@ -1,6 +1,6 @@
 import {resolve} from "path";
 import {readdirSync, readFileSync} from "fs";
-import {getUpstreamName} from "../structure/upstream";
+import {getUpstreamNameDown} from "../structure/upstream";
 import {debugFn} from "../template-render";
 import {whoAmI} from "../../config";
 import {escapeRegExp} from "../structure/public-server-sections";
@@ -76,7 +76,7 @@ export function createReplacer(service, configGlobal, configServer, configMainBo
 		
 		const args = Object.assign({
 			configMainBody: configMainBody,
-			upstream: getUpstreamName(service),
+			upstream: getUpstreamNameDown(service),
 		}, params);
 		
 		try {

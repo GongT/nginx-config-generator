@@ -10,8 +10,8 @@ export function createAllServer(arg) {
 server {
 	server_name ${service._alias.join(' ')};
 	
-	listen 80;
-	listen [::]:80;
+	listen 81;
+	listen [::]:81;
 	
 	${createPublicServerSection().replace(/\n/g, '\n\t')}
 	
@@ -19,7 +19,7 @@ server {
 	
 	${createSSL(arg, false).replace(/\n/g, '\n\t')}
     
-    ${createBody(arg).replace(/\n/g, '\n\t')}
+    ${createBody(arg, 'down').replace(/\n/g, '\n\t')}
 }
 #### createAllServer END
 `;

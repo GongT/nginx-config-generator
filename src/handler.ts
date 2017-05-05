@@ -33,7 +33,7 @@ export interface IServiceConfig {
 	machines: string[];
 	SSL: boolean|'force';
 	outerSubDomainName?: string;
-	interfaceMachine: string;
+	interfaceMachine: string[];
 	outerDomainName?: string;
 	existsCurrentServer: string;
 	alias?: string[],
@@ -117,10 +117,10 @@ handleChange((list) => {
 			locations: {},
 			machines: [],
 			SSL: false,
-			interfaceMachine: whoAmI.id,
+			interfaceMachine: [whoAmI.id],
 			existsCurrentServer: container.Config.Hostname,
 			_alias: getAllNames(container),
-			extraBodyString: 'access_log tiny;',
+			extraBodyString: 'access_log /dev/stdout tiny;',
 		};
 		
 		const content = generateConfigFile(fakeService);
@@ -131,8 +131,12 @@ handleChange((list) => {
 	removeUnusedFiles(SERVER_SAVE_FOLDER, createdFilesServers);
 	const anyChange = somethingChanged(createdFiles) || somethingChanged(createdFilesServers);
 	
-	if (process.env.RUN_IN_DOCKER && anyChange) {
+	if (anyChange) {
 		debug('try to restart nginx...');
+		if(!process.env.RUN_IN_DOCKER){
+			debug('  not run in docker, not restart nginx');
+			return;
+		}
 		docker_exec(docker, 'nginx', ['nginx', '-t']).then(([exit, out, err]) => {
 			if (exit === 0) {
 				console.log('\x1B[38;5;10m>>> nginx config test success. \x1B[0m');
