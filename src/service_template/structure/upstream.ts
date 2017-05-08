@@ -67,7 +67,7 @@ class upstreamCreator {
 	private pushSelf() {
 		debugFn(`  self: docker - ${this.service.existsCurrentServer}`);
 		this.ret.push(`\t# self: docker - ${this.service.existsCurrentServer}`);
-		this.ret.push(`\tserver ${this.service.existsCurrentServer}:${this.appPort} weight=200 fail_timeout=1s; # server in docker`);
+		this.ret.push(`\tserver ${this.service.existsCurrentServer}:${this.appPort} weight=200 fail_timeout=5s; # server in docker`);
 	}
 	
 	private pushAllLocal(backup: boolean) {
@@ -79,7 +79,7 @@ class upstreamCreator {
 		const server = getServer(serverName);
 		debugFn(`  local network: ${server.internal}`);
 		this.ret.push(`\t# local network: ${server.internal}`);
-		this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 5 : 1}s; # local network`)
+		this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 30 : 10}s; # local network`)
 	};
 	
 	private pushFail(backup: boolean = true) {
@@ -94,7 +94,7 @@ class upstreamCreator {
 			const server = getServer(serverName);
 			debugFn(`  gateway upstream: ${server.internal}`);
 			this.ret.push(`\t# gateway upstream: ${server.internal}`);
-			this.ret.push(`\tserver ${server.internal}:${this.upPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 5 : 1}s; # local network`)
+			this.ret.push(`\tserver ${server.internal}:${this.upPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 30 : 10}s; # local network`)
 		});
 		return d.length;
 	};
