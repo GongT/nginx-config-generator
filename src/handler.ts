@@ -147,7 +147,7 @@ handleChange((list) => {
 						console.log('\x1B[38;5;9m>>> nginx reload failed. \x1B[0m');
 						throw new Error('nginx reload error');
 					}
-				}).catch((e) => {
+				}, (e) => {
 					console.error('Docker Exec failed: ', e);
 					throw e;
 				});
@@ -156,15 +156,17 @@ handleChange((list) => {
 				throw new Error('nginx config error');
 			}
 		});
-		p.catch((e) => {
-			console.error('Docker Exec failed: ', e);
+		p.then(() => {
+			console.log('\x1B[38;5;14m>>> inited = %s (%s). \x1B[0m', inited, typeof inited);
+		}, (e) => {
+			console.error('\x1B[38;5;9m>>> Docker Exec failed: %s\x1B[0m', e? e.stack || e.message : 'no message.');
 		});
 		if (!inited) {
 			p.then(() => {
 				console.log('\x1B[38;5;10m>>> first trigger reload, send complete notify. \x1B[0m');
 				inited = true;
 				NotifyInitCompleteEvent();
-			}).catch((e) => {
+			}, (e) => {
 				
 				inited = true;
 				InitFailQuit();
