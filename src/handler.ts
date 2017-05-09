@@ -170,6 +170,7 @@ handleChange((list) => {
 				
 				inited = true;
 				InitFailQuit();
+				console.error(new Error("process.exit"));
 				process.exit(1);
 			});
 		}

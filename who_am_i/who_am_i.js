@@ -57,6 +57,7 @@ if (!foundMySelf) {
 	if (!process.env.RUN_IN_DOCKER) {
 		console.error('set `DOCKER_MY_SERVER_ID` environment var to debug.')
 	}
+	console.error(new Error("process.exit"));
 	process.exit(2);
 }
 
