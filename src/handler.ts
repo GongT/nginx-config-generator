@@ -109,6 +109,10 @@ handleChange((list) => {
 		if (!serviceName) {
 			debug(`container name not valid: ${name}`);
 		}
+		if (serviceName === process.env.PROJECT_NAME) {
+			debug(`ignore my self`);
+			return;
+		}
 		
 		const fakeService: IServiceConfig = {
 			serverName: serviceName,
