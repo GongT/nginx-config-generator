@@ -68,9 +68,7 @@ function getServiceMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
 	});
 	return ret;
 }
-setTimeout(() => { // delay 4s to start, wait hosts-generator complete its action.
-	connectDocker(4000); // wait 4s every action
-}, process.env.RUN_IN_DOCKER? 4000 : 50);
+connectDocker(4000); // wait 4s every action
 
 handleChange((list) => {
 	debug('docker status changed!');
