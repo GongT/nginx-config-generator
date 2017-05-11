@@ -52,11 +52,9 @@ class upstreamCreator {
 				this.pushFail(false);
 			} else {
 				this.pushGateway();
-				this.pushFail();
 			}
 		} else {
 			this.pushAllLocal(false);
-			this.pushFail();
 		}
 		
 		this.ret.push('}');
