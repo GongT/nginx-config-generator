@@ -25,7 +25,6 @@ build.npmInstall('./package.json', ['git', 'python', 'g++', 'make']);
 
 build.systemd({
 	type: 'notify',
-	startTimeout: 15,
 	watchdog: 5,
 });
 build.startupCommand('dist/boot.js');

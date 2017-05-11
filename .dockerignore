@@ -10,6 +10,7 @@ jspm_packages
 npm-debug.log*
 coverage/
 typings
+screen.*
 *.md
 Dockerfile
 *.Dockerfile
