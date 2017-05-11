@@ -23,7 +23,11 @@ build.forceLocalDns();
 build.npmInstallSource(JsonEnv.gfw.npmRegistry.upstream);
 build.npmInstall('./package.json', ['git', 'python', 'g++', 'make']);
 
-build.systemdType('notify');
+build.systemd({
+	type: 'notify',
+	startTimeout: 15,
+	watchdog: 5,
+});
 build.startupCommand('dist/boot.js');
 build.shellCommand('/usr/local/bin/node');
 // build.stopCommand('stop.sh');
