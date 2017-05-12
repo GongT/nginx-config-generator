@@ -1,4 +1,3 @@
-import * as Debug from "debug";
 import {InitFailQuit, NotifyInitCompleteEvent} from "typescript-common-library/server/boot/service-control";
 import {connectDocker, docker, handleChange} from "./lib/docker";
 import {getAllNames, getServiceKnownAlias, getServiceName} from "./lib/labels";
@@ -10,8 +9,12 @@ import {createHash} from "crypto";
 import {docker_exec} from "./lib/docker-exec";
 import * as extend from "extend";
 import {whoAmI} from "./config";
-const debug_start = Debug('start');
-const debug = Debug('handle');
+import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+const debug_start = createLogger(LEVEL.NOTICE, 'start');
+const debug_normal = createLogger(LEVEL.INFO, 'handle');
+const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
+const debug_nginx_error = createLogger(LEVEL.ERROR, 'nginx');
+const debug_init_error = createLogger(LEVEL.EMERG, 'init');
 
 let inited = false;
 
@@ -49,7 +52,7 @@ const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name
 	obj.serverName = name;
 	obj.outerDomainName = (obj.outerSubDomainName || name) + '.' + JsonEnv.baseDomainName;
 	if (!obj._alias) {
-		console.error('service %s has no alias.', name);
+		debug_start('service %s has no alias.', name);
 		obj._alias = [];
 	}
 	
@@ -71,7 +74,7 @@ function getServiceMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
 connectDocker(4000); // wait 4s every action
 
 handleChange((list) => {
-	debug('docker status changed!');
+	debug_normal('docker status changed!');
 	const runningService = getServiceMap(list);
 	serviceDefines.forEach((obj) => {
 		if (runningService.hasOwnProperty(obj.serverName)) {
@@ -87,9 +90,9 @@ handleChange((list) => {
 	const createdFiles = {};
 	const createdFilesServers = {};
 	
-	debug(`creating config files in "${SERVICE_SAVE_FOLDER}".`);
+	debug_normal('# Config Files');
+	debug_normal(`creating config files in "${SERVICE_SAVE_FOLDER}".`);
 	serviceDefines.forEach((service: IServiceConfig) => {
-		console.error('');
 		const content = generateConfigFile(service);
 		writeFile(createdFiles, service.serverName, content);
 		
@@ -101,16 +104,17 @@ handleChange((list) => {
 		}
 	});
 	
+	debug_normal('# Running Service');
 	Object.keys(runningService).forEach((name) => {
 		console.error('');
 		const container: DockerInspect = runningService[name];
 		const serviceName = getServiceName(container);
 		
 		if (!serviceName) {
-			debug(`container name not valid: ${name}`);
+			debug_normal(`container name not valid: ${name}`);
 		}
 		if (serviceName === process.env.PROJECT_NAME) {
-			debug(`ignore my self`);
+			debug_normal(`ignore my self`);
 			return;
 		}
 		
@@ -134,48 +138,52 @@ handleChange((list) => {
 	const anyChange = somethingChanged(createdFiles) || somethingChanged(createdFilesServers);
 	
 	if (anyChange) {
-		debug('try to restart nginx...');
+		debug_normal('try to restart nginx...');
 		if (!process.env.RUN_IN_DOCKER) {
-			debug('  not run in docker, not restart nginx');
+			debug_notice('  not run in docker, not restart nginx');
 			return;
 		}
 		const p = docker_exec(docker, 'nginx', ['nginx', '-t']).then(([exit]) => {
 			if (exit === 0) {
-				console.log('\x1B[38;5;10m>>> nginx config test success. \x1B[0m');
+				debug_normal('>>> nginx config test success.');
 				return docker_exec(docker, 'nginx', ['nginx', '-s', 'reload']).then(([exit]) => {
 					if (exit === 0) {
-						console.log('\x1B[38;5;10m>>> nginx reload success. \x1B[0m');
+						debug_normal('>>> nginx reload success.');
 					} else {
-						console.log('\x1B[38;5;9m>>> nginx reload failed. \x1B[0m');
+						debug_nginx_error('>>> nginx reload failed.');
 						throw new Error('nginx reload error');
 					}
 				}, (e) => {
-					console.error('Docker Exec failed: ', e);
+					debug_nginx_error('Docker Exec failed: ', e);
 					throw e;
 				});
 			} else {
-				console.log('\x1B[38;5;9m>>> nginx config has error. \x1B[0m');
+				debug_nginx_error('>>> nginx config has error.');
 				throw new Error('nginx config error');
 			}
 		});
 		p.then(() => {
-			console.log('\x1B[38;5;14m>>> inited = %s (%s). \x1B[0m', inited, typeof inited);
+			debug_start('>>> inited = %s (%s).', inited, typeof inited);
 		}, (e) => {
-			console.error('\x1B[38;5;9m>>> Docker Exec failed: %s\x1B[0m', e? e.stack || e.message : 'no message.');
+			debug_nginx_error('>>> Docker Exec failed: %s', e? e.stack || e.message : 'no message.');
 		});
 		if (!inited) {
 			p.then(() => {
-				console.log('\x1B[38;5;10m>>> first trigger reload, send complete notify. \x1B[0m');
+				debug_start('>>> first trigger reload, send complete notify.');
 				inited = true;
 				NotifyInitCompleteEvent();
 			}, (e) => {
-				
+				debug_init_error(e);
 				inited = true;
 				InitFailQuit();
 				console.error(new Error("process.exit"));
 				process.exit(1);
 			});
 		}
+	} else if (!inited) {
+		debug_start('>>> first trigger reload, send complete notify.');
+		inited = true;
+		NotifyInitCompleteEvent();
 	}
 });
 
@@ -189,38 +197,38 @@ function writeServerFile(storage: {[id: string]: boolean}, filename: string, con
 }
 
 function writeFileAbs(storage: {[id: string]: boolean}, configFile: string, content: string) {
-	debug('file: %s', basename(configFile));
-	debug(`  location: ${configFile}.`);
+	debug_normal('file: %s', basename(configFile));
+	debug_normal(`  location: ${configFile}.`);
 	
 	storage[configFile] = true;
 	
 	const oldHash = existsSync(configFile)? md5(readFileSync(configFile, 'utf-8')) : '';
-	debug(`    old file hash    = ${oldHash}`);
+	debug_normal(`    old file hash    = ${oldHash}`);
 	
 	if (oldHash) {
 		const newHash = md5(content);
-		debug(`    new content hash = ${oldHash}`);
+		debug_normal(`    new content hash = ${oldHash}`);
 		
 		if (oldHash === newHash) {
-			debug('  file not changed.');
-			debug(`file: ${configFile} -- complete`);
+			debug_normal('  file not changed.');
+			debug_normal(`file: ${configFile} -- complete`);
 			storage[configFile] = false;
 			return;
 		} else {
-			debug('  file changed.');
+			debug_normal('  file changed.');
 		}
 	} else {
-		debug('  file not exists.');
+		debug_normal('  file not exists.');
 	}
 	
 	try {
 		writeFileSync(configFile, content, 'utf-8');
-		debug('  write complete.');
+		debug_normal('  write complete.');
 	} catch (error) {
-		debug('  write file error: \n%s', error.trace);
+		debug_normal('  write file error: \n%s', error.trace);
 		storage[configFile] = false;
 	}
-	debug(`file: ${configFile} -- complete`);
+	debug_normal(`file: ${configFile} -- complete`);
 }
 
 function md5(str) {
@@ -241,10 +249,10 @@ function removeUnusedFiles(root: string, changedFiles: {[absFile: string]: boole
 			console.error('removing old unknown file: %s', file);
 			try {
 				unlinkSync(file);
-				debug('file removed');
+				debug_normal('file removed');
 				changedFiles[file] = true;
 			} catch (e) {
-				debug('remove file error: %s', e.trace);
+				debug_normal('remove file error: %s', e.trace);
 			}
 		}
 	});
