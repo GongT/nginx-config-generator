@@ -7,9 +7,7 @@ import {existsSync} from "fs";
 import {createSSLFailedServer} from "./create-ssl-failed-server";
 
 export function createHttpsServer(service: IServiceConfig) {
-	const certExists = existsSync(service.certFile);
-	
-	if (!certExists) {
+	if (!existsSync(service.certFile)) {
 		return createSSLFailedServer(service);
 	}
 	
