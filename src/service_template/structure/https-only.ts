@@ -22,8 +22,8 @@ server {
 server { # http jump in https server
 	${createServerName(service)}
 	
-	listen 80;
-	listen [::]:80;
+	listen 81;
+	listen [::]:81;
 	
 	${createCertBotPass(service).replace(/\n/g, '\n\t')}
 	

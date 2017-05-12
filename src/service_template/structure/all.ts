@@ -15,8 +15,8 @@ export function createAllServer(service: IServiceConfig) {
 server {
 	${createServerName(service)}
 	
-	listen 80;
-	listen [::]:80;
+	listen 81;
+	listen [::]:81;
 	
 	${createCertBotPass(service).replace(/^/mg, '\t')}
 	

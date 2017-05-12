@@ -139,7 +139,9 @@ function realDo() {
 	}, (e) => {
 		busy = false;
 		gen_log('generator error: ' + e.message);
-		return true;
+		setImmediate(() => {
+			throw e;
+		});
 	});
 }
 
