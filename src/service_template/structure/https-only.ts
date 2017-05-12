@@ -4,27 +4,13 @@ import {createServerBody} from "./body";
 import {createServerName} from "../structure/server_name";
 import {IServiceConfig} from "../../handler";
 import {existsSync} from "fs";
+import {createSSLFailedServer} from "./create-ssl-failed-server";
 
 export function createHttpsServer(service: IServiceConfig) {
 	const certExists = existsSync(service.certFile);
-	const publicFetcher = `
-	listen 80;
-	listen [::]:80;
-	
-	${createCertBotPass(service).replace(/\n/g, '\n\t')}`
 	
 	if (!certExists) {
-		return `
-### createHttpsServer - no ssl cert found...  at: ${service.certFile}
-server {
-	${createServerName(service)}
-	${publicFetcher}
-	
-	location / {
-		root /etc/nginx/html;
-		return 500 /etc/nginx/html/nosslcert.html;
-	}
-}`
+		return createSSLFailedServer(service);
 	}
 	
 	return `
@@ -38,7 +24,11 @@ server {
 }
 server { # http jump in https server
 	${createServerName(service)}
-	${publicFetcher}
+	
+	listen 80;
+	listen [::]:80;
+	
+	${createCertBotPass(service).replace(/\n/g, '\n\t')}
 	
 	# SSL jump
 	location / {

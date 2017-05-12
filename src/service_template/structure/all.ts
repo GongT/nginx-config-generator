@@ -5,6 +5,7 @@ import {createServerName} from "./server_name";
 import {IServiceConfig} from "../../handler";
 
 export function createAllServer(service: IServiceConfig) {
+	
 	return `
 #### createAllServer
 server {
