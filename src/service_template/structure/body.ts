@@ -36,11 +36,11 @@ export function createServerBody(service: IServiceConfig) {
 		'# -> ' + service.serverName
 	];
 	
+	ret.push(`include ${CONFIG_PATH_REL}/public-body.conf;`);
+	
 	ret.push('## extraBodies');
 	ret.push(service.configFileServer.join('\n').trim());
 	ret.push('## createBody END');
-	
-	ret.push(`include ${CONFIG_PATH_REL}/puiblic-body.conf;`);
 	
 	return ret.join('\n');
 }

@@ -69,7 +69,8 @@ class upstreamCreator {
 			}
 		} else {
 			if (this.direction === 'down') {
-				this.pushFail(false);
+				const length = this.pushAllLocal(false);
+				this.pushFail(length !== 0);
 			} else {
 				this.pushAllLocal(false);
 				this.pushFail(true);
@@ -104,7 +105,7 @@ class upstreamCreator {
 	private pushFail(backup: boolean = true) {
 		debugFn(`  add failed upstream`);
 		this.ret.push(`\t# failed upstream`);
-		this.ret.push(`\tserver 127.0.0.1:8888 ${backup? 'backup' : ''} fail_timeout=1s; # TRIGGER ERROR`);
+		this.ret.push(`\tserver 127.0.0.1:18281 ${backup? 'backup' : ''} fail_timeout=1s; # TRIGGER ERROR`);
 	}
 	
 	private pushGateway(backup: boolean = false) {

@@ -4,7 +4,7 @@ import {LOADER_PATH} from "../boot";
 export function init() {
 	writeFileAbs({}, LOADER_PATH, `
 server {
-	listen 8888 default_server;
+	listen 18281 default_server;
 	server_name _;
 	
 	root /etc/nginx/html;

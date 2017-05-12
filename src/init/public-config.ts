@@ -20,5 +20,5 @@ proxy_cache_use_stale  error timeout invalid_header updating
 access_log /dev/stdout cache;
 expires                6h;
 `);
-	writeConfigFile('puiblic-body', createPublicServerSection());
+	writeConfigFile('public-body', createPublicServerSection());
 }
