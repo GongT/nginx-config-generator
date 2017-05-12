@@ -86,7 +86,7 @@ export function generateConfigFile(service: IServiceConfig): string {
 	return `###   GENERATED FILE ; DO NOT MODIFY   ###
 ${service.configFileGlobal.join('\n')}
 ${upstream.trim()}
-${bodyGoingDown.trim()}
+${sslError? '# SSL ERROR - NO BODY' : bodyGoingDown.trim()}
 ${sslError? sslErrorBody : bodyGoingUp.trim()}
 `.replace(/\n\s*(\n\s*\n)/g, '$1')
 }
