@@ -2,14 +2,14 @@ import {InitFailQuit, NotifyInitCompleteEvent} from "typescript-common-library/s
 import {connectDocker, docker, handleChange} from "./lib/docker";
 import {getAllNames, getServiceKnownAlias, getServiceName} from "./lib/labels";
 import {generateConfigFile, generateServerFile} from "./service_template/template-render";
-import {existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync} from "fs";
+import {readdirSync, unlinkSync} from "fs";
 import {SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "./boot";
-import {basename, resolve} from "path";
-import {createHash} from "crypto";
+import {resolve} from "path";
 import {docker_exec} from "./lib/docker-exec";
 import * as extend from "extend";
 import {whoAmI} from "./config";
 import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+import {writeGeneratedFile, writeServerFile} from "./lib/files";
 const debug_start = createLogger(LEVEL.NOTICE, 'start');
 const debug_normal = createLogger(LEVEL.INFO, 'handle');
 const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
@@ -35,6 +35,7 @@ export interface IServiceConfig {
 	servers?: {[ports: string]: StreamDefine};
 	machines: string[];
 	SSL: boolean|'force';
+	certFile?: string;
 	outerSubDomainName?: string;
 	interfaceMachine: string[];
 	outerDomainName?: string;
@@ -42,6 +43,9 @@ export interface IServiceConfig {
 	alias?: string[],
 	_alias: string[];
 	extraBodyString?: string;
+	configFileGlobal?: string[];
+	configFileServer?: string[];
+	configMainBody?: string[];
 }
 
 const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name) => {
@@ -94,7 +98,7 @@ handleChange((list) => {
 	debug_normal(`creating config files in "${SERVICE_SAVE_FOLDER}".`);
 	serviceDefines.forEach((service: IServiceConfig) => {
 		const content = generateConfigFile(service);
-		writeFile(createdFiles, service.serverName, content);
+		writeGeneratedFile(createdFiles, service.serverName, content);
 		
 		if (service.servers) {
 			const serverContent = generateServerFile(service);
@@ -130,7 +134,7 @@ handleChange((list) => {
 		};
 		
 		const content = generateConfigFile(fakeService);
-		writeFile(createdFiles, serviceName, content);
+		writeGeneratedFile(createdFiles, serviceName, content);
 	});
 	
 	removeUnusedFiles(SERVICE_SAVE_FOLDER, createdFiles);
@@ -186,54 +190,6 @@ handleChange((list) => {
 		NotifyInitCompleteEvent();
 	}
 });
-
-function writeFile(storage: {[id: string]: boolean}, filename: string, content: string) {
-	const configFile = resolve(SERVICE_SAVE_FOLDER, `${filename}.conf`);
-	return writeFileAbs(storage, configFile, content);
-}
-function writeServerFile(storage: {[id: string]: boolean}, filename: string, content: string) {
-	const configFile = resolve(SERVER_SAVE_FOLDER, `${filename}.conf`);
-	return writeFileAbs(storage, configFile, content);
-}
-
-function writeFileAbs(storage: {[id: string]: boolean}, configFile: string, content: string) {
-	debug_normal('file: %s', basename(configFile));
-	debug_normal(`  location: ${configFile}.`);
-	
-	storage[configFile] = true;
-	
-	const oldHash = existsSync(configFile)? md5(readFileSync(configFile, 'utf-8')) : '';
-	debug_normal(`    old file hash    = ${oldHash}`);
-	
-	if (oldHash) {
-		const newHash = md5(content);
-		debug_normal(`    new content hash = ${oldHash}`);
-		
-		if (oldHash === newHash) {
-			debug_normal('  file not changed.');
-			debug_normal(`file: ${configFile} -- complete`);
-			storage[configFile] = false;
-			return;
-		} else {
-			debug_normal('  file changed.');
-		}
-	} else {
-		debug_normal('  file not exists.');
-	}
-	
-	try {
-		writeFileSync(configFile, content, 'utf-8');
-		debug_normal('  write complete.');
-	} catch (error) {
-		debug_normal('  write file error: \n%s', error.trace);
-		storage[configFile] = false;
-	}
-	debug_normal(`file: ${configFile} -- complete`);
-}
-
-function md5(str) {
-	return createHash('md5').update(str).digest().toString('hex');
-}
 
 function somethingChanged(obj) {
 	return Object.keys(obj).some(i => obj[i]);

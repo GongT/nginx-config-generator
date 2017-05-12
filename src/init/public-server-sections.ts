@@ -1,4 +1,4 @@
-import {whoAmI} from "../../config";
+import {whoAmI} from "../config";
 
 export function escapeRegExp(str) {
 	return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
@@ -11,8 +11,8 @@ export function createPublicServerSection() {
 	).join('\n');
 }
 
-export function createProxySettings(){
-    return `
+export function createProxySettings() {
+	return `
 proxy_connect_timeout 1s;
 proxy_http_version 1.1;
 # health_check;

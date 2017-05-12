@@ -1,12 +1,11 @@
 import {existsSync, writeFileSync} from "fs";
 import {resolve} from "path";
 import {sync as mkdirpSync} from "mkdirp";
+import {IServiceConfig} from "../../handler";
 
 const certbotEnabled = existsSync('/data/certbot-root/');
 
-export function createSSL(arg, missingSafe: boolean) {
-	const {service, configMainBody, configFileServer} = arg;
-	
+export function createSSL(service: IServiceConfig) {
 	if (certbotEnabled) {
 		const exampleFolder = resolve('/data/certbot-root/', service.serverName, '.well-known');
 		if (!existsSync(exampleFolder)) {
@@ -19,21 +18,6 @@ export function createSSL(arg, missingSafe: boolean) {
 <h1>This path is for certbot ssl request.</h1>
 </body>
 </html>`);
-	}
-	
-	const certFile = resolve('/data/letsencrypt/live', service.outerDomainName, 'privkey.pem');
-	if (!existsSync(certFile)) {
-		if (missingSafe) {
-			return `
-### no ssl cert found...  at: ${certFile}
-listen 443;
-listen [::]:443;
-`;
-		} else {
-			return `
-### no ssl cert found...  at: ${certFile}
-`;
-		}
 	}
 	
 	return `

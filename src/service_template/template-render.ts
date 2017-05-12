@@ -1,11 +1,17 @@
 import {IServiceConfig} from "../handler";
-import {createReplacer} from "./renders/create-replacer";
 import {createAllServer} from "./structure/all";
 import {createHttpsServer} from "./structure/https-only";
-import {createHttpServer} from "./structure/http-only";
-import {createUpstreamDown, createUpstreamUp, getUpstreamNameDown, getUpstreamNameUp} from "./structure/upstream";
+import {createHttpDownServer, createHttpUpServer} from "./structure/http-only";
+import {
+	createUpstreamAll,
+	createUpstreamDown,
+	createUpstreamUp,
+	getUpstreamNameDown,
+	getUpstreamNameUp
+} from "./structure/upstream";
 import {whoAmI} from "../config";
 import * as Debug from "debug";
+import {normalizeService} from "./normalize";
 const debug = Debug('template');
 
 export function debugFn(str: string) {
@@ -48,67 +54,32 @@ server {
 }
 
 export function generateConfigFile(service: IServiceConfig): string {
-	const configFileGlobal = ['###   GENERATED FILE ; DO NOT MODIFY   ###'];
-	const configFileServer = ['### server bodies '];
-	const configMainBody = [];
+	normalizeService(service);
 	
-	configFileGlobal.push(createUpstreamDown(service));
-	configFileGlobal.push(createUpstreamUp(service));
-	
-	const createServerSection = createReplacer(service, configFileGlobal, configFileServer, configMainBody);
-	
-	if (!service.locations) {
-		service.locations = {};
-	}
-	
-	Object.keys(service.locations).map((location) => {
-		const conf = service.locations[location];
-		if (typeof conf === 'string') {
-			createServerSection({
-				type: conf,
-				params: {
-					location
-				},
-			});
-		} else {
-			if (!conf.options) {
-				conf.options = {};
-			}
-			if (conf.location) {
-				location = conf.location;
-			}
-			createServerSection({
-				type: conf.type,
-				params: Object.assign(conf, {
-					location
-				}),
-			});
-		}
-	});
+	const upstream = createUpstreamAll(service);
 	
 	let bodyGoingDown;
 	if (!isGateway(service) || service.SSL === false) {
 		debugFn(`create http server: only HTTP (SSL=${service.SSL}).`);
-		bodyGoingDown = createHttpServer({service, configMainBody, configFileServer}, 'down');
+		bodyGoingDown = createHttpDownServer(service);
 	} else if (service.SSL === 'force') {
 		debugFn('create http server: force HTTPS.');
-		bodyGoingDown = createHttpsServer({service, configMainBody, configFileServer});
+		bodyGoingDown = createHttpsServer(service);
 	} else if (service.SSL === true) {
 		debugFn('create http server: both HTTP & HTTPS.');
-		bodyGoingDown = createAllServer({service, configMainBody, configFileServer});
+		bodyGoingDown = createAllServer(service);
 	} else {
 		debugFn(`unknown SSL option: ${service.SSL}.`);
 		throw new Error('SSL config error?!');
 	}
 	
-	const bodyGoingUp = createHttpServer({service, configMainBody, configFileServer}, 'up');
+	const bodyGoingUp = createHttpUpServer(service);
 	
-	return `
-${configFileGlobal.join('\n')}
-
-${bodyGoingDown}
-
-${bodyGoingUp}
+	return `###   GENERATED FILE ; DO NOT MODIFY   ###
+${service.configFileGlobal.join('\n')}
+${upstream.trim()}
+${bodyGoingDown.trim()}
+${bodyGoingUp.trim()}
 `.replace(/\n\s*(\n\s*\n)/g, '$1')
 }
 

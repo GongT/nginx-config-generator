@@ -1,7 +1,6 @@
 import {debugFn} from "../template-render";
-export function createCertBotPass(arg) {
-	const {service, configMainBody, configFileServer} = arg;
-	
+import {IServiceConfig} from "../../handler";
+export function createCertBotPass(service: IServiceConfig) {
 	debugFn('handle certbot request.');
 	
 	return `###createCertBot

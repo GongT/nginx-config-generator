@@ -3,7 +3,8 @@ import {readdirSync, readFileSync} from "fs";
 import {getUpstreamNameDown} from "../structure/upstream";
 import {debugFn} from "../template-render";
 import {whoAmI} from "../../config";
-import {escapeRegExp} from "../structure/public-server-sections";
+import {IServiceConfig} from "../../handler";
+import {CONFIG_PATH_REL} from "../../boot";
 
 export interface PredefinedLocation {
 	global?: (a: any, b: any) => string;
@@ -64,19 +65,20 @@ function compile(text) {
 	}
 }
 
-export function createReplacer(service, configGlobal, configServer, configMainBody) {
+export function createReplacer(service: IServiceConfig, configGlobal, configServer, configMainBody) {
 	const isGlobalExists = {};
-	return ({params, type}:{params?: any, type: string}) => {
+	return ({params, type}: {params?: any, type: string}) => {
 		debugFn(`body section: [${type}]: ${JSON.stringify(params, null, 4)}`);
 		
 		if (!predefinedLocationConfigs.hasOwnProperty(type)) {
-			throw new Error(`unknown section type: ${type}, service=${service.serviceName}.`);
+			throw new Error(`unknown section type: ${type}, service=${service.serverName}.`);
 		}
 		const predef: PredefinedLocation = predefinedLocationConfigs[type];
 		
 		const args = Object.assign({
 			configMainBody: configMainBody,
 			upstream: getUpstreamNameDown(service),
+			configFolder: CONFIG_PATH_REL,
 		}, params);
 		
 		try {
@@ -91,8 +93,12 @@ export function createReplacer(service, configGlobal, configServer, configMainBo
 				configMainBody.push(predef.body(service, args));
 			}
 		} catch (e) {
-			throw new Error(`parse location failed: ${type}, params=${args}, service=${service.serviceName}.
-${e.message}`)
+			throw new Error(`parse location failed: ${type}, params=${args}, service=${service.serverName}.
+${e.message}`);
 		}
 	}
+}
+
+export function escapeRegExp(str) {
+	return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }

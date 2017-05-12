@@ -1,24 +1,36 @@
-import {createBody} from "./body";
-import {createCertBotPass} from "./certbot";
-import {createPublicServerSection} from "./public-server-sections";
+import {createMainBody, createServerBody} from "./body";
+import {createServerName} from "./server_name";
+import {IServiceConfig} from "../../handler";
 
-export function createHttpServer(arg, direction: 'up'|'down') {
-	const {service, configMainBody, configFileServer} = arg;
-	
+export function createHttpDownServer(service: IServiceConfig) {
 	return `
-### createHttpServer
+### createHttpDownServer
 server {
-	server_name ${service._alias.join(' ')};
+	${createServerName(service)}
 	
-	listen ${direction==='down'?81:80};
-	listen [::]:${direction==='down'?81:80};
+	listen 81;
+	listen [::]:81;
 	
-	${createPublicServerSection().replace(/\n/g, '\n\t')}
-    
-	${createCertBotPass(arg).replace(/\n/g, '\n\t')}
+	${createServerBody(service).replace(/^/mg, '\t').trim()}
 	
-    ${createBody(arg, direction).replace(/\n/g, '\n\t')}
+    ${createMainBody(service, 'down').replace(/^/mg, '\t').trim()}
 }
-### createHttpServer END
+### createHttpDownServer END
+`;
+}
+export function createHttpUpServer(service: IServiceConfig) {
+	return `
+### createHttpUpServer
+server {
+	${createServerName(service)}
+	
+	listen 80;
+	listen [::]:80;
+	
+	${createServerBody(service).replace(/^/mg, '\t').trim()}
+	
+    ${createMainBody(service, 'up').replace(/^/mg, '\t').trim()}
+}
+### createHttpUpServer END
 `;
 }

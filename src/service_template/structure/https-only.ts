@@ -1,28 +1,44 @@
-import {createBody} from "./body";
 import {createSSL} from "./ssl";
 import {createCertBotPass} from "./certbot";
-import {createPublicServerSection} from "./public-server-sections";
+import {createServerBody} from "./body";
+import {createServerName} from "../structure/server_name";
+import {IServiceConfig} from "../../handler";
+import {existsSync} from "fs";
 
-export function createHttpsServer(arg) {
-	const {service, configMainBody, configFileServer} = arg;
+export function createHttpsServer(service: IServiceConfig) {
+	const certExists = existsSync(service.certFile);
+	const publicFetcher = `
+	listen 80;
+	listen [::]:80;
+	
+	${createCertBotPass(service).replace(/\n/g, '\n\t')}`
+	
+	if (!certExists) {
+		return `
+### createHttpsServer - no ssl cert found...  at: ${service.certFile}
+server {
+	${createServerName(service)}
+	${publicFetcher}
+	
+	location / {
+		root /etc/nginx/html;
+		return 500 /etc/nginx/html/nosslcert.html;
+	}
+}`
+	}
+	
 	return `
 ### createHttpsServer
 server {
-	server_name ${service._alias.join(' ')};
+	${createServerName(service)}
 	
-	${createPublicServerSection().replace(/\n/g, '\n\t')}
+	${createSSL(service).replace(/\n/mg, '\n\t')}
 	
-	${createSSL(arg, true).replace(/\n/g, '\n\t')}
-    
-    ${createBody(arg, 'down').replace(/\n/g, '\n\t')}
+    ${createServerBody(service).replace(/^/mg, '\t')}
 }
 server { # http jump in https server
-	server_name ${service.outerDomainName};
-	
-	listen 81;
-	listen [::]:81;
-	
-	${createCertBotPass(arg).replace(/\n/g, '\n\t')}
+	${createServerName(service)}
+	${publicFetcher}
 	
 	# SSL jump
 	location / {
