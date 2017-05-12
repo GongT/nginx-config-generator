@@ -1,4 +1,4 @@
-import {createMainBody, createServerBody} from "./body";
+import {createMainBody, createServerBody, section} from "./body";
 import {createServerName} from "./server_name";
 import {IServiceConfig} from "../../handler";
 
@@ -7,13 +7,10 @@ export function createHttpDownServer(service: IServiceConfig) {
 ### createHttpDownServer
 server {
 	${createServerName(service)}
-	
 	listen 81;
 	listen [::]:81;
-	
-	${createServerBody(service).replace(/^/mg, '\t').trim()}
-	
-    ${createMainBody(service, 'down').replace(/^/mg, '\t').trim()}
+	${section('body', createServerBody(service))}
+	${section('main', createMainBody(service, 'down'))}
 }
 ### createHttpDownServer END
 `;
@@ -23,13 +20,10 @@ export function createHttpUpServer(service: IServiceConfig) {
 ### createHttpUpServer
 server {
 	${createServerName(service)}
-	
 	listen 80;
 	listen [::]:80;
-	
-	${createServerBody(service).replace(/^/mg, '\t').trim()}
-	
-    ${createMainBody(service, 'up').replace(/^/mg, '\t').trim()}
+	${section('body', createServerBody(service))}
+	${section('main', createMainBody(service, 'up'))}
 }
 ### createHttpUpServer END
 `;
