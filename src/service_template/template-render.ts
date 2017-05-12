@@ -12,6 +12,7 @@ import {
 import {whoAmI} from "../config";
 import * as Debug from "debug";
 import {normalizeService} from "./normalize";
+import {createSSLFailedServer} from "./structure/create-ssl-failed-server";
 const debug = Debug('template');
 
 export function debugFn(str: string) {
@@ -58,28 +59,34 @@ export function generateConfigFile(service: IServiceConfig): string {
 	
 	const upstream = createUpstreamAll(service);
 	
-	let bodyGoingDown;
+	let bodyGoingDown, sslError = false;
 	if (!isGateway(service) || service.SSL === false) {
 		debugFn(`create http server: only HTTP (SSL=${service.SSL}).`);
 		bodyGoingDown = createHttpDownServer(service);
 	} else if (service.SSL === 'force') {
 		debugFn('create http server: force HTTPS.');
 		bodyGoingDown = createHttpsServer(service);
+		sslError = !bodyGoingDown;
 	} else if (service.SSL === true) {
 		debugFn('create http server: both HTTP & HTTPS.');
 		bodyGoingDown = createAllServer(service);
+		sslError = !bodyGoingDown;
 	} else {
 		debugFn(`unknown SSL option: ${service.SSL}.`);
 		throw new Error('SSL config error?!');
 	}
 	
+	let sslErrorBody;
+	if (sslError) {
+		sslErrorBody = createSSLFailedServer(service);
+	}
 	const bodyGoingUp = createHttpUpServer(service);
 	
 	return `###   GENERATED FILE ; DO NOT MODIFY   ###
 ${service.configFileGlobal.join('\n')}
 ${upstream.trim()}
 ${bodyGoingDown.trim()}
-${bodyGoingUp.trim()}
+${sslError? sslErrorBody : bodyGoingUp.trim()}
 `.replace(/\n\s*(\n\s*\n)/g, '$1')
 }
 

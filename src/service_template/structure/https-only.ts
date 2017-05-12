@@ -4,11 +4,10 @@ import {createServerBody} from "./body";
 import {createServerName} from "../structure/server_name";
 import {IServiceConfig} from "../../handler";
 import {existsSync} from "fs";
-import {createSSLFailedServer} from "./create-ssl-failed-server";
 
 export function createHttpsServer(service: IServiceConfig) {
 	if (!existsSync(service.certFile)) {
-		return createSSLFailedServer(service);
+		return null;
 	}
 	
 	return `
