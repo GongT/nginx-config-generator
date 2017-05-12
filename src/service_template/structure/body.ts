@@ -4,7 +4,7 @@ import {IServiceConfig} from "../../handler";
 import {CONFIG_PATH_REL} from "../../boot";
 
 export function createMainBody(service: IServiceConfig, direction: 'up'|'down') {
-	debugFn('body: http');
+	debugFn('body: http - %s', direction);
 	
 	return `
 ## createMainBody

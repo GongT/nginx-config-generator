@@ -1,13 +1,14 @@
-import * as Debug from "debug";
 import {docker_list_containers} from "./docker-list-containers";
 import {docker_inspect_all} from "./docker-instpect";
+import {createLogger, LEVEL} from "typescript-common-library/server/debug";
 const Dockerode = require("dockerode");
 const DockerEvents = require("docker-events");
 
 const handlers: Handler[] = [];
 
-const debug = Debug('docker');
-const gen_log = Debug('gen');
+const debug = createLogger(LEVEL.INFO, 'docker');
+const gen_log = createLogger(LEVEL.INFO, 'gen');
+const cb_error = createLogger(LEVEL.ERROR, 'callback');
 
 export const docker = new Dockerode({
 	socketPath: process.env.RUN_IN_DOCKER? '/data/host-var-run/docker.sock' : '/var/run/docker.sock'
@@ -106,7 +107,12 @@ function realDo() {
 		re_cache(list);
 		
 		const wait = handlers.map((cb) => {
-			return cb(list);
+			try {
+				return cb(list);
+			} catch (e) {
+				displayError(e);
+				return Promise.reject(e);
+			}
 		});
 		
 		const pWait = Promise.all(wait);
@@ -114,7 +120,13 @@ function realDo() {
 			t = null;
 			gen_log('------ generator not response in 10 seconds ------')
 		}, 10000);
-		pWait.then(() => t && clearTimeout(t), () => t && clearTimeout(t));
+		const clean = () => {
+			if (t) {
+				clearTimeout(t);
+				t = null;
+			}
+		};
+		pWait.then(clean, clean);
 		
 		return pWait;
 	}).then(() => {
@@ -156,4 +168,8 @@ export function handleChange(cb: Handler) {
 	changeCount++;
 	debug('handle docker change (handler count=%s)', changeCount);
 	handlers.push(cb);
+}
+
+function displayError(e: Error) {
+	cb_error(e.stack);
 }

@@ -1,5 +1,5 @@
-import * as Debug from "debug";
-const debug = Debug('list');
+import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+const debug = createLogger(LEVEL.INFO, 'list');
 
 export function docker_list_containers(dockerApi) {
 	return new Promise((resolve, reject) => {

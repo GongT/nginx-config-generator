@@ -10,13 +10,14 @@ import {
 	getUpstreamNameUp
 } from "./structure/upstream";
 import {whoAmI} from "../config";
-import * as Debug from "debug";
 import {normalizeService} from "./normalize";
 import {createSSLFailedServer} from "./structure/create-ssl-failed-server";
-const debug = Debug('template');
+import {createLogger, LEVEL} from "typescript-common-library/server/debug";
 
-export function debugFn(str: string) {
-	debug(str.replace(/\n/g, '\n\t  '));
+const debug = createLogger(LEVEL.INFO, 'template');
+
+export function debugFn(str: string, ...args: any[]) {
+	debug(str.replace(/\n/g, '\n\t  '), ...args);
 }
 
 export function generateServerFile(service: IServiceConfig): string {
