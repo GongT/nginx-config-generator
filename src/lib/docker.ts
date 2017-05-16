@@ -1,6 +1,6 @@
 import {docker_list_containers} from "./docker-list-containers";
 import {docker_inspect_all} from "./docker-instpect";
-import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 const Dockerode = require("dockerode");
 const DockerEvents = require("docker-events");
 

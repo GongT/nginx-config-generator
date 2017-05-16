@@ -1,7 +1,7 @@
 import {existsSync, readFileSync, writeFileSync} from "fs";
 import {basename, resolve} from "path";
 import {createHash} from "crypto";
-import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 import {EXTRA_CONFIG_SAVE_FOLDER, HTTP_SAVE_FOLDER, SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "../boot";
 
 const debug = createLogger(LEVEL.INFO, 'filesystem');

@@ -1,4 +1,4 @@
-import {InitFailQuit, NotifyInitCompleteEvent} from "typescript-common-library/server/boot/service-control";
+import {InitFailQuit, NotifyInitCompleteEvent} from "@gongt/ts-stl-server/boot/service-control";
 import {connectDocker, docker, handleChange} from "./lib/docker";
 import {getAllNames, getServiceKnownAlias, getServiceName} from "./lib/labels";
 import {generateConfigFile, generateServerFile} from "./service_template/template-render";
@@ -8,7 +8,7 @@ import {resolve} from "path";
 import {docker_exec} from "./lib/docker-exec";
 import * as extend from "extend";
 import {whoAmI} from "./config";
-import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 import {writeGeneratedFile, writeServerFile} from "./lib/files";
 const debug_start = createLogger(LEVEL.NOTICE, 'start');
 const debug_normal = createLogger(LEVEL.INFO, 'handle');

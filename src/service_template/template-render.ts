@@ -12,7 +12,7 @@ import {
 import {whoAmI} from "../config";
 import {normalizeService} from "./normalize";
 import {createSSLFailedServer} from "./structure/create-ssl-failed-server";
-import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 
 const debug = createLogger(LEVEL.INFO, 'template');
 

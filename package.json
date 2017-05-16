@@ -5,16 +5,19 @@
 	"scripts": {},
 	"repository": {},
 	"dependencies": {
+		"@gongt/ts-stl-server": "git+https://github.com/GongT/typescript-common-library.git",
 		"@gongt/jenv-data": "^1.2.3",
-		"@types/debug": "0.0.29",
-		"@types/mkdirp": "^0.3.29",
-		"@types/node": "^6.0.51",
+		"systemd-daemon": "latest",
 		"debug": "^2.3.3",
 		"docker-events": "0.0.2",
 		"dockerode": "^2.3.1",
 		"extend": "^3.0.0",
 		"mkdirp": "^0.5.1",
-		"source-map-support": "^0.4.6",
-		"typescript-common-library": "git+https://github.com/GongT/typescript-common-library.git"
+		"source-map-support": "^0.4.6"
+	},
+	"devDependencies": {
+		"@types/debug": "0.0.29",
+		"@types/mkdirp": "^0.3.29",
+		"@types/node": "^6.0.51"
 	}
 }

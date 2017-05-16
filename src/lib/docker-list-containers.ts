@@ -1,4 +1,4 @@
-import {createLogger, LEVEL} from "typescript-common-library/server/debug";
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 const debug = createLogger(LEVEL.INFO, 'list');
 
 export function docker_list_containers(dockerApi) {

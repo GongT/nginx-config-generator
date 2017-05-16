@@ -1,4 +1,4 @@
-import {Transform, Readable} from "stream";
+import {Readable, Transform} from "stream";
 export function docker_exec(dockerApi, container, Cmd, input?) {
 	return new Promise((resolve, reject) => {
 		dockerApi.getContainer(container).exec({
@@ -57,7 +57,9 @@ class StringStream extends Transform {
 	}
 	
 	_transform(chunk, enc, next) {
-		this.push(Buffer.concat([this.color, chunk, this.reset]));
+		this.push(this.color);
+		this.push(chunk, enc);
+		this.push(this.reset);
 		this.result += chunk.toString('utf-8');
 		next();
 	}

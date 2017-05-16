@@ -1,7 +1,6 @@
 const os = require('os');
 const ifaces = os.networkInterfaces();
 const serverIpMap = require('./get_server_ip');
-const extend = require('util')._extend;
 const debug = require('debug')('ip:who_am_i');
 
 module.exports = {
@@ -61,6 +60,6 @@ if (!foundMySelf) {
 	process.exit(2);
 }
 
-extend(module.exports, foundMySelf);
+Object.assign(module.exports, foundMySelf);
 
 debug('who am i: self = %s', JSON.stringify(module.exports, null, 4));
