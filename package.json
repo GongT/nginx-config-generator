@@ -5,7 +5,7 @@
 	"scripts": {},
 	"repository": {},
 	"dependencies": {
-		"@gongt/ts-stl-server": "git+https://github.com/GongT/typescript-common-library.git",
+		"@gongt/ts-stl-server": "latest",
 		"@gongt/jenv-data": "^1.2.3",
 		"systemd-daemon": "latest",
 		"debug": "^2.3.3",
