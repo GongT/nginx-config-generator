@@ -36,6 +36,7 @@ export function createServerBody(service: IServiceConfig, direction: 'up'|'down'
 		'# -> ' + service.serverName,
 	];
 	
+	ret.push(`proxy_set_header Host ${service.outerDomainName};`);
 	ret.push(`include ${CONFIG_PATH_REL}/public-body.conf;`);
 	
 	ret.push('## extraBodies');

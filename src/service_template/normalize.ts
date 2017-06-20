@@ -13,6 +13,7 @@ export function normalizeService(service: IServiceConfig) {
 	}
 	const configFileGlobal = service.configFileGlobal;
 	configFileGlobal.push('');
+	const configFileGlobalCheck = configFileGlobal.slice();
 	
 	if (!service.upStream) {
 		service.upStream = {
@@ -29,7 +30,7 @@ export function normalizeService(service: IServiceConfig) {
 	
 	const createServerSectionUp = createReplacer(service, configFileGlobal,
 		service.upStream.configFileServer, service.upStream.configMainBody);
-	const createServerSectionDown = createReplacer(service, configFileGlobal,
+	const createServerSectionDown = createReplacer(service, configFileGlobalCheck,
 		service.downStream.configFileServer, service.downStream.configMainBody);
 	
 	function createServerSection(P: ReplaceParams) {
@@ -74,5 +75,12 @@ export function normalizeService(service: IServiceConfig) {
 	
 	if (service.SSL) {
 		service.certFile = getCertFilePath(service);
+	}
+	
+	if (configFileGlobal.join('') !== configFileGlobalCheck.join('')) {
+		console.log('============== up =============\n%s\n==============down=============\n%s\n===============================',
+			configFileGlobal.join('\n'),
+			configFileGlobalCheck.join('\n'));
+		throw new Error('global config of upStream and downStream different.');
 	}
 }

@@ -12,7 +12,7 @@ export function createPublicServerSection() {
 }
 
 export function createProxySettings() {
-	return `
+	return `# createProxySettings()
 proxy_connect_timeout 1s;
 proxy_http_version 1.1;
 proxy_next_upstream error timeout invalid_header non_idempotent http_503 http_500 http_502;
@@ -24,7 +24,7 @@ proxy_busy_buffers_size 128k;
 `;
 }
 export function createPreventLoop() {
-	return `
+	return `# createPreventLoop()
 add_header X-Proxy-Path "$http_x_proxy_path->${whoAmI.id}" always;
 if ( $http_x_proxy_path ~ /->${escapeRegExp(whoAmI.id)}($|->)/ ) {
 	# 508 Loop Detected (WebDAV)
