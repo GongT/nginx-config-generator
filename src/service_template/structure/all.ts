@@ -18,7 +18,7 @@ server {
 	listen [::]:81;
 	${section('certbot', createCertBotPass(service))}
 	${section('ssl', createSSL(service))}
-	${section('body', createServerBody(service))}
+	${section('body', createServerBody(service, 'down'))}
 	${section('main', createMainBody(service, 'down'))}
 }
 #### createAllServer END

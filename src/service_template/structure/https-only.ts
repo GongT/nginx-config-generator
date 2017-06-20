@@ -1,9 +1,9 @@
-import {createSSL} from "./ssl";
-import {createCertBotPass} from "./certbot";
-import {createMainBody, createServerBody, section} from "./body";
-import {createServerName} from "../structure/server_name";
-import {IServiceConfig} from "../../handler";
 import {existsSync} from "fs";
+import {IServiceConfig} from "../../handler";
+import {createServerName} from "../structure/server_name";
+import {createMainBody, createServerBody, section} from "./body";
+import {createCertBotPass} from "./certbot";
+import {createSSL} from "./ssl";
 
 export function createHttpsServer(service: IServiceConfig) {
 	if (!existsSync(service.certFile)) {
@@ -15,7 +15,7 @@ export function createHttpsServer(service: IServiceConfig) {
 server {
 	${createServerName(service)}
 	${section('ssl', createSSL(service))}
-	${section('body', createServerBody(service))}
+	${section('body', createServerBody(service, 'down'))}
 	${section('main', createMainBody(service, 'down'))}
 }
 server { # http jump in https server

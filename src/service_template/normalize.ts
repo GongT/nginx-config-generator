@@ -1,19 +1,47 @@
-import {IServiceConfig} from "../handler";
-import {createReplacer} from "./renders/create-replacer";
 import {resolve} from "path";
+import {IServiceConfig} from "../handler";
+import {createReplacer, ReplaceParams} from "./renders/create-replacer";
+import {getUpstreamNameDown, getUpstreamNameUp} from "./structure/upstream";
 
 export function getCertFilePath(service: IServiceConfig) {
 	return resolve('/data/letsencrypt/live', service.outerDomainName, 'privkey.pem');
 }
 
 export function normalizeService(service: IServiceConfig) {
-	const configFileGlobal = service.configFileGlobal = [];
-	const configFileServer = service.configFileServer = [];
-	const configMainBody = service.configMainBody = [];
-	
+	if (!service.configFileGlobal) {
+		service.configFileGlobal = [];
+	}
+	const configFileGlobal = service.configFileGlobal;
 	configFileGlobal.push('');
 	
-	const createServerSection = createReplacer(service, configFileGlobal, configFileServer, configMainBody);
+	if (!service.upStream) {
+		service.upStream = {
+			configMainBody: [],
+			configFileServer: [],
+		};
+	}
+	if (!service.downStream) {
+		service.downStream = {
+			configMainBody: [],
+			configFileServer: [],
+		};
+	}
+	
+	const createServerSectionUp = createReplacer(service, configFileGlobal,
+		service.upStream.configFileServer, service.upStream.configMainBody);
+	const createServerSectionDown = createReplacer(service, configFileGlobal,
+		service.downStream.configFileServer, service.downStream.configMainBody);
+	
+	function createServerSection(P: ReplaceParams) {
+		createServerSectionUp({
+			...P,
+			upstream: getUpstreamNameUp(service),
+		});
+		createServerSectionDown({
+			...P,
+			upstream: getUpstreamNameDown(service),
+		});
+	}
 	
 	if (!service.locations) {
 		service.locations = {};
@@ -25,7 +53,7 @@ export function normalizeService(service: IServiceConfig) {
 			createServerSection({
 				type: conf,
 				params: {
-					location
+					location,
 				},
 			});
 		} else {
@@ -38,7 +66,7 @@ export function normalizeService(service: IServiceConfig) {
 			createServerSection({
 				type: conf.type,
 				params: Object.assign(conf, {
-					location
+					location,
 				}),
 			});
 		}

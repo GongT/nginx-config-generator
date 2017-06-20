@@ -1,15 +1,15 @@
 import {InitFailQuit, NotifyInitCompleteEvent} from "@gongt/ts-stl-server/boot/service-control";
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
+import * as extend from "extend";
+import {readdirSync, unlinkSync} from "fs";
+import {resolve} from "path";
+import {SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "./boot";
+import {whoAmI} from "./config";
 import {connectDocker, docker, handleChange} from "./lib/docker";
+import {docker_exec} from "./lib/docker-exec";
+import {writeGeneratedFile, writeServerFile} from "./lib/files";
 import {getAllNames, getServiceKnownAlias, getServiceName} from "./lib/labels";
 import {generateConfigFile, generateServerFile} from "./service_template/template-render";
-import {readdirSync, unlinkSync} from "fs";
-import {SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "./boot";
-import {resolve} from "path";
-import {docker_exec} from "./lib/docker-exec";
-import * as extend from "extend";
-import {whoAmI} from "./config";
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
-import {writeGeneratedFile, writeServerFile} from "./lib/files";
 const debug_start = createLogger(LEVEL.NOTICE, 'start');
 const debug_normal = createLogger(LEVEL.INFO, 'handle');
 const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
@@ -44,8 +44,24 @@ export interface IServiceConfig {
 	_alias: string[];
 	extraBodyString?: string;
 	configFileGlobal?: string[];
-	configFileServer?: string[];
-	configMainBody?: string[];
+	upStream?: {
+		configFileServer: string[];
+		configMainBody: string[];
+	};
+	downStream?: {
+		configFileServer: string[];
+		configMainBody: string[];
+	};
+}
+
+export function switchBody(service: IServiceConfig, direction: 'up'|'down') {
+	if (direction === 'up') {
+		return service.upStream;
+	}
+	if (direction === 'down') {
+		return service.downStream;
+	}
+	throw new TypeError(`direction "${direction}" unknown.`);
 }
 
 const serviceDefines: IServiceConfig[] = Object.keys(JsonEnv.services).map((name) => {

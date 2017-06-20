@@ -1,10 +1,9 @@
-import {resolve} from "path";
 import {readdirSync, readFileSync} from "fs";
-import {getUpstreamNameDown} from "../structure/upstream";
-import {debugFn} from "../template-render";
+import {resolve} from "path";
+import {CONFIG_PATH_REL} from "../../boot";
 import {whoAmI} from "../../config";
 import {IServiceConfig} from "../../handler";
-import {CONFIG_PATH_REL} from "../../boot";
+import {debugFn} from "../template-render";
 
 export interface PredefinedLocation {
 	global?: (a: any, b: any) => string;
@@ -65,9 +64,15 @@ function compile(text) {
 	}
 }
 
-export function createReplacer(service: IServiceConfig, configGlobal, configServer, configMainBody) {
+export interface ReplaceParams {
+	params: any;
+	type: string;
+	upstream?: string
+}
+
+export function createReplacer(service: IServiceConfig, configGlobal, configServer, configMainBody): (p: ReplaceParams) => void {
 	const isGlobalExists = {};
-	return ({params, type}: {params?: any, type: string}) => {
+	return ({params, type, upstream}: ReplaceParams) => {
 		debugFn(`body section: [${type}]: ${JSON.stringify(params, null, 4)}`);
 		
 		if (!predefinedLocationConfigs.hasOwnProperty(type)) {
@@ -77,7 +82,7 @@ export function createReplacer(service: IServiceConfig, configGlobal, configServ
 		
 		const args = Object.assign({
 			configMainBody: configMainBody,
-			upstream: getUpstreamNameDown(service),
+			upstream: upstream, // getUpstreamNameDown(service),
 			configFolder: CONFIG_PATH_REL,
 		}, params);
 		
@@ -87,6 +92,7 @@ export function createReplacer(service: IServiceConfig, configGlobal, configServ
 				configGlobal.push(predef.global(service, {}));
 			}
 			if (predef.server) {
+				console.log('-a-', service, args)
 				configServer.push(predef.server(service, args));
 			}
 			if (predef.body) {

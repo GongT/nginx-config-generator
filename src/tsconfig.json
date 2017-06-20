@@ -23,7 +23,11 @@
 		],
 		"types": [],
 		"outDir": "../dist",
-		"rootDir": "./"
+		"rootDir": "./",
+		"paths": {
+			"@gongt/ts-stl-server": ["node_modules/@gongt/ts-stl-server"],
+			"@gongt/ts-stl-library": ["node_modules/@gongt/ts-stl-library"]
+		}
 	},
 	"exclude": ["node_module"]
 }

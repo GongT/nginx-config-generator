@@ -1,5 +1,5 @@
 import {CONFIG_PATH_REL} from "../../boot";
-import {IServiceConfig} from "../../handler";
+import {IServiceConfig, switchBody} from "../../handler";
 import {debugFn} from "../template-render";
 import {createPassthru} from "./passthru";
 
@@ -9,7 +9,7 @@ export function createMainBody(service: IServiceConfig, direction: 'up'|'down') 
 	return `
 ## createMainBody
 location / {
-	${section('extra bodies', service.configMainBody)}
+	${section('extra bodies', switchBody(service, direction).configMainBody)}
 	${section('manual set body', service.extraBodyString)}
 	${section('main bodies', createPassthru(service, direction))}
 }
@@ -31,7 +31,7 @@ export function section(name, s: string|string[]) { // todo define not here
 	}
 }
 
-export function createServerBody(service: IServiceConfig) {
+export function createServerBody(service: IServiceConfig, direction: 'up'|'down') {
 	const ret = [
 		'# -> ' + service.serverName,
 	];
@@ -39,7 +39,7 @@ export function createServerBody(service: IServiceConfig) {
 	ret.push(`include ${CONFIG_PATH_REL}/public-body.conf;`);
 	
 	ret.push('## extraBodies');
-	ret.push(service.configFileServer.join('\n').trim());
+	ret.push(switchBody(service, direction).configFileServer.join('\n').trim());
 	ret.push('## createBody END');
 	
 	return ret.join('\n');
