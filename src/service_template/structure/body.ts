@@ -1,7 +1,7 @@
-import {createPassthru} from "./passthru";
-import {debugFn} from "../template-render";
-import {IServiceConfig} from "../../handler";
 import {CONFIG_PATH_REL} from "../../boot";
+import {IServiceConfig} from "../../handler";
+import {debugFn} from "../template-render";
+import {createPassthru} from "./passthru";
 
 export function createMainBody(service: IServiceConfig, direction: 'up'|'down') {
 	debugFn('body: http - %s', direction);
@@ -33,10 +33,11 @@ export function section(name, s: string|string[]) { // todo define not here
 
 export function createServerBody(service: IServiceConfig) {
 	const ret = [
-		'# -> ' + service.serverName
+		'# -> ' + service.serverName,
 	];
 	
 	ret.push(`include ${CONFIG_PATH_REL}/public-body.conf;`);
+	ret.push(`include ${CONFIG_PATH_REL}/server-body.conf;`);
 	
 	ret.push('## extraBodies');
 	ret.push(service.configFileServer.join('\n').trim());
