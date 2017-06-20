@@ -1,5 +1,5 @@
-import {IServiceConfig} from "../../handler";
 import {serverMap, whoAmI} from "../../config";
+import {IServiceConfig} from "../../handler";
 import {debugFn, isGateway} from "../template-render";
 
 const isMe = serverName => serverName === whoAmI.id;
@@ -15,6 +15,7 @@ const sameNetwork = serverName => {
 	const server = getServer(serverName);
 	return server.network === whoAmI.network;
 };
+const meIsGateway = whoAmI['front'];
 
 class upstreamCreator {
 	private readonly upName: string;
@@ -46,35 +47,31 @@ class upstreamCreator {
 			`#       serviceDockerRunning=${this.serviceDockerRunning}`,
 			`#       wantServiceToRun=${this.wantServiceToRun}`,
 			`#       direction=${this.direction}`,
-			`upstream ${this.upName} {`
+			`upstream ${this.upName} {`,
 		];
 		debugFn(`create upstream:${this.direction} for ${this.service.serverName}:${this.appPort} `);
 		
 		if (this.serviceDockerRunning) {
 			this.pushSelf();
-			const length = this.pushAllLocal(!this.isGateway);
-			if (0 === length) {
-				this.pushFail(true);
-			}
-		} else if (this.wantServiceToRun) {
-			if (this.direction === 'down') {
-				this.pushFail(false);
-			} else {
-				const length = this.pushGateway();
-				if (0 === length) {
-					this.pushFail(false); // myself is both: gateway & only upstream
-				} else {
-					this.pushFail(true);
-				}
-			}
-		} else {
-			if (this.direction === 'down') {
+			this.pushFail(true);
+		} else if (this.direction === 'down') {
+			if (meIsGateway) {
 				const length = this.pushAllLocal(false);
 				this.pushFail(length !== 0);
 			} else {
-				this.pushAllLocal(false);
+				this.pushFail(false);
+			}
+		} else if (this.wantServiceToRun) {
+			const length = this.pushAllLocal(false);
+			if (0 === length) {
+				this.pushFail(false); // myself is both: gateway & only upstream
+				// TODO: reach other gateway... not fail...
+			} else {
 				this.pushFail(true);
 			}
+		} else {
+			this.pushAllLocal(false);
+			this.pushFail(true);
 		}
 		
 		this.ret.push('}');
@@ -97,9 +94,9 @@ class upstreamCreator {
 	
 	private pushLocal(serverName, backup: boolean) {
 		const server = getServer(serverName);
-		debugFn(`  local network: ${server.internal}`);
-		this.ret.push(`\t# local network: ${server.internal}`);
-		this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 30 : 10}s; # local network`)
+		debugFn(`  local network: ${server.internal} -> ${server.id} `);
+		this.ret.push(`\t# local network: ${server.internal} -> ${server.id} `);
+		this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 30 : 10}s; # local network - not gateway`)
 	};
 	
 	private pushFail(backup: boolean = true) {
@@ -113,9 +110,9 @@ class upstreamCreator {
 		const d = this.service.interfaceMachine.filter(isNotMe).filter(sameNetwork);
 		d.forEach((serverName) => {
 			const server = getServer(serverName);
-			debugFn(`  gateway upstream: ${server.internal}`);
-			this.ret.push(`\t# gateway upstream: ${server.internal}`);
-			this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 30 : 10}s; # local network`)
+			debugFn(`  gateway upstream: ${server.internal} -> ${server.id}`);
+			this.ret.push(`\t# gateway upstream: ${server.internal} -> ${server.id}`);
+			this.ret.push(`\tserver ${server.internal}:${this.appPort} weight=100 ${backup? 'backup' : ''} fail_timeout=${backup? 30 : 10}s; # local network - gateway`)
 		});
 		return d.length;
 	};

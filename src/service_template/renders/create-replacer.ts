@@ -92,7 +92,6 @@ export function createReplacer(service: IServiceConfig, configGlobal, configServ
 				configGlobal.push(predef.global(service, {}));
 			}
 			if (predef.server) {
-				console.log('-a-', service, args)
 				configServer.push(predef.server(service, args));
 			}
 			if (predef.body) {
