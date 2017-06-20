@@ -15,6 +15,8 @@ export function createProxySettings() {
 	return `
 proxy_connect_timeout 1s;
 proxy_http_version 1.1;
+proxy_next_upstream error timeout invalid_header non_idempotent http_503 http_500 http_502;
+proxy_next_upstream_tries 3;
 # health_check;
 proxy_buffer_size 128k;
 proxy_buffers 32 32k;

@@ -37,7 +37,6 @@ export function createServerBody(service: IServiceConfig) {
 	];
 	
 	ret.push(`include ${CONFIG_PATH_REL}/public-body.conf;`);
-	ret.push(`include ${CONFIG_PATH_REL}/server-body.conf;`);
 	
 	ret.push('## extraBodies');
 	ret.push(service.configFileServer.join('\n').trim());
