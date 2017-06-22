@@ -4,7 +4,7 @@ import {createPublicServerSection} from "./public-server-sections";
 export function init() {
 	writeConfigFile('cache', `###   GENERATED FILE ; DO NOT MODIFY   ###
 add_header             Cache-Control "public";
-add_header             X-Cached $upstream_cache_status always;
+more_set_headers       "X-Cached: $upstream_cache_status";
 
 proxy_cache_bypass     $http_cache_control;
 proxy_cache_bypass     $arg_nocache;

@@ -25,12 +25,14 @@ proxy_busy_buffers_size 128k;
 }
 export function createPreventLoop() {
 	return `# createPreventLoop()
-add_header X-Proxy-Path "$http_x_proxy_path->${whoAmI.id}" always;
+more_set_headers -r "X-Proxy-Path: $http_x_proxy_path->${whoAmI.id}";
 if ( $http_x_proxy_path ~ /->${escapeRegExp(whoAmI.id)}($|->)/ ) {
 	# 508 Loop Detected (WebDAV)
 	return 508 $http_x_proxy_path;
 }
 proxy_set_header X-Proxy-Path "$http_x_proxy_path->${whoAmI.id}";
 proxy_set_header X-Proxy-Request-Id $request_id;
+
+proxy_set_header X-Http2 $http2$http_x_http2;
 `;
 }
