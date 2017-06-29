@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = function parseJson(file) {
-	const json = fs.readFileSync(file, 'utf-8');
+	const json = fs.readFileSync(file, {encoding: 'utf8'});
 	try {
 		return JSON.parse(json);
 	} catch (e) {

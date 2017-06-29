@@ -1,7 +1,7 @@
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
+import {createHash} from "crypto";
 import {existsSync, readFileSync, writeFileSync} from "fs";
 import {basename, resolve} from "path";
-import {createHash} from "crypto";
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 import {EXTRA_CONFIG_SAVE_FOLDER, HTTP_SAVE_FOLDER, SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "../boot";
 
 const debug = createLogger(LEVEL.INFO, 'filesystem');
@@ -29,7 +29,7 @@ export function writeFileAbs(storage: {[id: string]: boolean}, filePath: string,
 	
 	storage[filePath] = true;
 	
-	const oldHash = existsSync(filePath)? md5(readFileSync(filePath, 'utf-8')) : '';
+	const oldHash = existsSync(filePath)? md5(readFileSync(filePath, {encoding: 'utf8'})) : '';
 	debug(`    old file hash    = ${oldHash}`);
 	
 	if (oldHash) {
@@ -49,7 +49,7 @@ export function writeFileAbs(storage: {[id: string]: boolean}, filePath: string,
 	}
 	
 	try {
-		writeFileSync(filePath, content, 'utf-8');
+		writeFileSync(filePath, content, {encoding: 'utf8'});
 		debug('  write complete.');
 	} catch (error) {
 		debug('  write file error: \n%s', error.trace);

@@ -6,18 +6,18 @@
 	"repository": {},
 	"dependencies": {
 		"@gongt/ts-stl-server": "latest",
-		"@gongt/jenv-data": "^1.2.3",
+		"@gongt/jenv-data": "^1.2.6",
 		"systemd-daemon": "latest",
-		"debug": "^2.3.3",
+		"debug": "^2.6.8",
 		"docker-events": "0.0.2",
-		"dockerode": "^2.3.1",
-		"extend": "^3.0.0",
+		"dockerode": "^2.5.0",
+		"extend": "^3.0.1",
 		"mkdirp": "^0.5.1",
-		"source-map-support": "^0.4.6"
+		"source-map-support": "^0.4.15"
 	},
 	"devDependencies": {
 		"@types/debug": "0.0.29",
 		"@types/mkdirp": "^0.3.29",
-		"@types/node": "^6.0.51"
+		"@types/node": "^8.0.5"
 	}
 }

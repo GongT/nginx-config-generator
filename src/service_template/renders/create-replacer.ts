@@ -39,7 +39,7 @@ readdirSync(TEMPLATE_PATH).forEach((fullFileName) => {
 		predefinedLocationConfigs[type] = {};
 	}
 	predefinedLocationConfigs[type][pos] =
-		compile(readFileSync(resolve(TEMPLATE_PATH, fullFileName), 'utf-8'));
+		compile(readFileSync(resolve(TEMPLATE_PATH, fullFileName), {encoding: 'utf8'}));
 });
 
 function compile(text) {
