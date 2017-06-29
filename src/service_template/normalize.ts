@@ -16,12 +16,12 @@ export function normalizeService(service: IServiceConfig) {
 	const configFileGlobalCheck = configFileGlobal.slice();
 	
 	if (!service.upStream) {
-		service.upStream = {};
+		service.upStream = <any>{};
 	}
 	service.upStream.configMainBody = [];
 	service.upStream.configFileServer = [];
 	if (!service.downStream) {
-		service.downStream = {};
+		service.downStream = <any>{};
 	}
 	service.downStream.configMainBody = [];
 	service.downStream.configFileServer = [];
