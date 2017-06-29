@@ -33,6 +33,7 @@ if ( $http_x_proxy_path ~ /->${escapeRegExp(whoAmI.id)}($|->)/ ) {
 proxy_set_header X-Proxy-Path "$http_x_proxy_path->${whoAmI.id}";
 # proxy_set_header X-Proxy-Request-Id $request_id;
 
-proxy_set_header X-Http2 $http2$http_x_http2;
+proxy_set_header X-Https "$https$http_x_https";
+proxy_set_header X-Http2 "$http2$http_x_http2";
 `;
 }
