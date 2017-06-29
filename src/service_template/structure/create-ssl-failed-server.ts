@@ -4,12 +4,12 @@ import {IServiceConfig} from "../../handler";
 
 export function createSSLFailedServer(service: IServiceConfig) {
 	return `
-### createHttpsServer - no ssl cert found...  at: ${service.certFile}
+### createSSLFailedServer - no ssl cert found...  at: ${service.certFile}
 server {
 	${createServerName(service)}
 	
-	listen 80;
-	listen [::]:80;
+	listen 81;
+	listen [::]:81;
 	
 	${createCertBotPass(service).replace(/\n/g, '\n\t')}
 	
