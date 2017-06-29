@@ -16,17 +16,15 @@ export function normalizeService(service: IServiceConfig) {
 	const configFileGlobalCheck = configFileGlobal.slice();
 	
 	if (!service.upStream) {
-		service.upStream = {
-			configMainBody: [],
-			configFileServer: [],
-		};
+		service.upStream = {};
 	}
+	service.upStream.configMainBody = [];
+	service.upStream.configFileServer = [];
 	if (!service.downStream) {
-		service.downStream = {
-			configMainBody: [],
-			configFileServer: [],
-		};
+		service.downStream = {};
 	}
+	service.downStream.configMainBody = [];
+	service.downStream.configFileServer = [];
 	
 	const createServerSectionUp = createReplacer(service, configFileGlobal,
 		service.upStream.configFileServer, service.upStream.configMainBody);
