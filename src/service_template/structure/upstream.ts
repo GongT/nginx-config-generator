@@ -53,11 +53,13 @@ class upstreamCreator {
 		
 		if (this.serviceDockerRunning) {
 			this.pushSelf();
-			this.pushFail(true);
+			// this.pushFail(true);
 		} else if (this.direction === 'down') {
 			if (meIsGateway) {
 				const length = this.pushAllLocal(false);
-				this.pushFail(length !== 0);
+				if (0 === length) {
+					this.pushFail(false);
+				}
 			} else {
 				this.pushFail(false);
 			}
@@ -67,11 +69,13 @@ class upstreamCreator {
 				this.pushFail(false); // myself is both: gateway & only upstream
 				// TODO: reach other gateway... not fail...
 			} else {
-				this.pushFail(true);
+				// this.pushFail(true);
 			}
 		} else {
-			this.pushAllLocal(false);
-			this.pushFail(true);
+			const length = this.pushAllLocal(false);
+			if (0 === length) {
+				this.pushFail(false);
+			}
 		}
 		
 		this.ret.push('}');
