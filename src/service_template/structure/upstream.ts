@@ -78,6 +78,7 @@ class upstreamCreator {
 			}
 		}
 		
+		this.ret.push('\tkeepalive 16;');
 		this.ret.push('}');
 		
 		return this.ret.join('\n');
