@@ -25,6 +25,7 @@ class upstreamCreator {
 	private readonly appPort: number;
 	private readonly wantServiceToRun: boolean;
 	private readonly serviceDockerRunning: boolean;
+	private http: boolean;
 	
 	constructor(private service: IServiceConfig,
 		private direction: 'up'|'down',
@@ -77,8 +78,9 @@ class upstreamCreator {
 				this.pushFail(false);
 			}
 		}
-		
-		this.ret.push('\tkeepalive 16;');
+		if (this.http) {
+			this.ret.push('\tkeepalive 16;');
+		}
 		this.ret.push('}');
 		
 		return this.ret.join('\n');
@@ -121,22 +123,28 @@ class upstreamCreator {
 		});
 		return d.length;
 	};
+	
+	isHttp(boo: boolean) {
+		this.http = boo;
+	}
 }
-export function createUpstreamAll(service: IServiceConfig) {
+export function createUpstreamAll(isHttp: boolean, service: IServiceConfig) {
 	return (
-		createUpstreamUp(service) +
+		createUpstreamUp(isHttp, service) +
 		'\n\n' +
-		createUpstreamDown(service)
+		createUpstreamDown(isHttp, service)
 	).trim();
 }
 
-export function createUpstreamUp(service: IServiceConfig, overwritePort?: number) {
+export function createUpstreamUp(isHttp: boolean, service: IServiceConfig, overwritePort?: number) {
 	const builder = new upstreamCreator(service, 'up', overwritePort);
+	builder.isHttp(isHttp);
 	return builder.create();
 }
 
-export function createUpstreamDown(service: IServiceConfig, overwritePort?: number) {
+export function createUpstreamDown(isHttp: boolean, service: IServiceConfig, overwritePort?: number) {
 	const builder = new upstreamCreator(service, 'down', overwritePort);
+	builder.isHttp(isHttp);
 	return builder.create();
 }
 

@@ -1,18 +1,18 @@
+import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
+import {whoAmI} from "../config";
 import {IServiceConfig} from "../handler";
+import {normalizeService} from "./normalize";
 import {createAllServer} from "./structure/all";
-import {createHttpsServer} from "./structure/https-only";
+import {createSSLFailedServer} from "./structure/create-ssl-failed-server";
 import {createHttpDownServer, createHttpUpServer} from "./structure/http-only";
+import {createHttpsServer} from "./structure/https-only";
 import {
 	createUpstreamAll,
 	createUpstreamDown,
 	createUpstreamUp,
 	getUpstreamNameDown,
-	getUpstreamNameUp
+	getUpstreamNameUp,
 } from "./structure/upstream";
-import {whoAmI} from "../config";
-import {normalizeService} from "./normalize";
-import {createSSLFailedServer} from "./structure/create-ssl-failed-server";
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 
 const debug = createLogger(LEVEL.INFO, 'template');
 
@@ -33,8 +33,8 @@ export function generateServerFile(service: IServiceConfig): string {
 		}
 		const proxyPort = def.port;
 		console.log('  proxy to: %s', proxyPort);
-		created.push(createUpstreamDown(service, proxyPort));
-		created.push(createUpstreamUp(service, proxyPort));
+		created.push(createUpstreamDown(false, service, proxyPort));
+		created.push(createUpstreamUp(false, service, proxyPort));
 		created.push(`## proxy ${port}
 server {
 	listen ${1 + parseInt(port)};
@@ -58,7 +58,7 @@ server {
 export function generateConfigFile(service: IServiceConfig): string {
 	normalizeService(service);
 	
-	const upstream = createUpstreamAll(service);
+	const upstream = createUpstreamAll(true, service);
 	
 	let bodyGoingDown, sslError = false;
 	if (!isGateway(service) || service.SSL === false) {
