@@ -7,9 +7,8 @@ export function createPassthru(service: IServiceConfig, direction: 'up'|'down') 
 		: getUpstreamNameUp(service);
 //proxy_set_header Host ${service.outerDomainName};
 	return `# createPassthru(${service.outerSubDomainName}, ${direction})
-
 proxy_set_header Connection "";
-
+proxy_set_header Host ${service.outerDomainName};
 proxy_pass http://${upstream};
 `;
 }
