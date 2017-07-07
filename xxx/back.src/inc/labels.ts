@@ -1,11 +1,6 @@
 import {array_unique} from "./array_unique";
 import {debugFn} from "../service_template/template-render";
 
-export function getServiceName(item: DockerInspect) {
-	const name = item.Name.replace(/^\//, '').replace(/\//, '-');
-	return /^[a-z\-0-9._]+$/.test(name)? name : '';
-}
-
 const baseDomain = JsonEnv.baseDomainName;
 export function getServiceKnownAlias(servName) {
 	if (!JsonEnv.services.hasOwnProperty(servName)) {

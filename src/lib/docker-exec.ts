@@ -1,5 +1,5 @@
 import {Readable, Transform} from "stream";
-export function docker_exec(dockerApi, container, Cmd, input?) {
+export function docker_exec(dockerApi, container, Cmd, input?): Promise<[number, string, string]> {
 	return new Promise((resolve, reject) => {
 		dockerApi.getContainer(container).exec({
 			Cmd: Cmd,
@@ -28,7 +28,7 @@ export function docker_exec(dockerApi, container, Cmd, input?) {
 				
 				wait(stream).then(() => {
 					return reInspectExit(exec);
-				}).then((code) => {
+				}).then((code: number) => {
 					resolve([code, stdout.result, stderr.result]);
 				}, reject);
 			});
@@ -52,15 +52,20 @@ class StringStream extends Transform {
 	constructor(isError?) {
 		super();
 		
-		this.color = new Buffer(isError? '\x1B[38;5;1;2m' : '\x1B[2m');
-		this.reset = new Buffer('\x1B[0m');
+		this.color = isError? '\x1B[0;38;5;5m' : '\x1B[0;38;5;6m';
+		this.reset = '\x1B[0m';
 	}
 	
-	_transform(chunk, enc, next) {
-		this.push(this.color);
-		this.push(chunk, enc);
-		this.push(this.reset);
-		this.result += chunk.toString('utf-8');
+	_transform(chunk: Buffer, enc, next) {
+		let str = chunk
+			.toString('utf8');
+		this.result += str;
+		const pushNewline = str.endsWith('\n');
+		str = str.trim().replace(/^/mg, this.color + '>> ' + this.reset);
+		this.push(str, 'utf8');
+		if (pushNewline) {
+			this.push('\n')
+		}
 		next();
 	}
 }

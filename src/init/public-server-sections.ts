@@ -24,13 +24,14 @@ proxy_busy_buffers_size 128k;
 `;
 }
 export function createPreventLoop() {
+	//language=TEXT
 	return `# createPreventLoop()
-more_set_headers "X-Proxy-Path: $http_x_proxy_path->${whoAmI.id}";
-if ( $http_x_proxy_path ~ /->${escapeRegExp(whoAmI.id)}($|->)/ ) {
+more_set_headers "X-Proxy-Path: \${http_x_proxy_path}${whoAmI.id}";
+if ( $http_x_proxy_path ~ /${escapeRegExp(whoAmI.id)}->/ ) {
 	# 508 Loop Detected (WebDAV)
-	return 508 $http_x_proxy_path;
+	return 508 '<h1>508 Loop Detected</h1>';
 }
-proxy_set_header X-Proxy-Path "$http_x_proxy_path->${whoAmI.id}";
+proxy_set_header X-Proxy-Path "\${http_x_proxy_path}${whoAmI.id}->";
 # proxy_set_header X-Proxy-Request-Id $request_id;
 
 proxy_set_header X-Https "$https$http_x_https";

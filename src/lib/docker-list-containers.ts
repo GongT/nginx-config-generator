@@ -1,7 +1,11 @@
 import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 const debug = createLogger(LEVEL.INFO, 'list');
 
-export function docker_list_containers(dockerApi) {
+export interface DockerListItem {
+	Id: string;
+}
+
+export function docker_list_containers(dockerApi): Promise<DockerListItem[]> {
 	return new Promise((resolve, reject) => {
 		dockerApi.listContainers((err, data) => {
 			if (err) {

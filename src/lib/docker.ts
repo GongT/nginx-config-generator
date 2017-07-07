@@ -1,50 +1,70 @@
+import {InitFailQuit, NotifyInitCompleteEvent, NotifyInitErrorEvent} from "@gongt/ts-stl-server/boot/service-control";
+import {createLogger} from "@gongt/ts-stl-server/debug";
+import {LOG_LEVEL} from "@gongt/ts-stl-server/log/levels";
+import {CallbackRunner} from "./callback-runner";
+import {docker_inspect, docker_inspect_all} from "./docker-instpect";
 import {docker_list_containers} from "./docker-list-containers";
-import {docker_inspect_all} from "./docker-instpect";
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
+
+export type Callback = (list: DockerInspect[]) => Promise<any>;
+
 const Dockerode = require("dockerode");
 const DockerEvents = require("docker-events");
 
-const handlers: Handler[] = [];
-
-const debug = createLogger(LEVEL.INFO, 'docker');
-const gen_log = createLogger(LEVEL.INFO, 'gen');
-const cb_error = createLogger(LEVEL.ERROR, 'callback');
+const debug = createLogger(LOG_LEVEL.INFO, 'docker');
+const gen_log = createLogger(LOG_LEVEL.INFO, 'gen');
+const cb_error = createLogger(LOG_LEVEL.ERROR, 'callback');
+const debug_start = createLogger(LOG_LEVEL.NOTICE, 'start');
+const debug_start_error = createLogger(LOG_LEVEL.ERROR, 'init');
 
 export const docker = new Dockerode({
-	socketPath: process.env.RUN_IN_DOCKER? '/data/host-var-run/docker.sock' : '/var/run/docker.sock'
+	socketPath: process.env.RUN_IN_DOCKER? '/data/host-var-run/docker.sock' : '/var/run/docker.sock',
 });
 const emitter = new DockerEvents({docker});
+const runner = new CallbackRunner(scheduleGenerate);
+const handlers: Callback[] = [];
+export let initComplete = false;
 
-let busy = false, pending = false, t: NodeJS.Timer = null, ot: NodeJS.Timer = null;
+let wto: Timeout;
+runner.on(runner.EVENTS.START, () => {
+	wto = timeout(10000);
+	wto.then(() => {
+		gen_log('------ generator not response in 10 seconds ------');
+	});
+});
+runner.on(runner.EVENTS.END, () => {
+	wto.kill();
+});
+runner.once(runner.EVENTS.ERROR, (e: Error) => {
+	NotifyInitErrorEvent();
+	debug_start_error('>>> failed first generate: %s', e.message);
+	InitFailQuit(e);
+});
+runner.once(runner.EVENTS.END, () => {
+	initComplete = true;
+	debug_start('>>> first trigger reload, send complete notify.');
+	NotifyInitCompleteEvent();
+});
 
 // watch
 emitter.on("connect", function () {
 	debug("connected to docker api");
-	scheduleGenerate('(re)connect');
+	if (process.env.RUN_IN_DOCKER) {
+		runner.delay(WAIT_TIME, 'connect').catch();
+	} else {
+		runner.run('connect').catch();
+	}
 });
 emitter.on("start", function (message) {
 	debug("container started: %j", message);
-	if (ot) {
-		clearTimeout(ot);
-	}
-	ot = setTimeout(() => {
-		scheduleGenerate("container started", message.id);
-		ot = null;
-	}, WAIT_TIME);
+	runner.delay(WAIT_TIME, "container started", message.id).catch();
 });
 emitter.on("die", function (message) {
 	debug("container stopped: %j", message);
-	if (ot) {
-		clearTimeout(ot);
-	}
-	ot = setTimeout(() => {
-		scheduleGenerate("container stopped", message.id);
-		ot = null;
-	}, WAIT_TIME);
+	runner.delay(WAIT_TIME, "container stopped", message.id).catch();
 });
 
-let WAIT_TIME;
-export function connectDocker(wait: number) {
+let WAIT_TIME: number = 1000;
+export function connectDocker(wait: number = 1000) {
 	WAIT_TIME = wait;
 	debug("connecting to docker api");
 	emitter.start();
@@ -54,102 +74,55 @@ export function disconnectDocker() {
 	emitter.stop();
 }
 
-function scheduleGenerate(why, target?) {
+async function scheduleGenerate(why: string, target?: string) {
+	debug('EVENT: %s', why);
 	if (target) {
 		debug('check %s is in building process...', target);
-		docker.getContainer(target).inspect((err, inspect) => {
-			const text = JSON.stringify(inspect, null, 2);
-			if (/BUILDING['"]?\s*[=:]\s*['"]?yes/.test(text)) {
-				debug('%s is in building process. ignore.', target);
-			} else {
-				debug('%s is not in building process. start generation.', target);
-				delayGenerate();
-			}
-		});
-	} else {
-		debug('EVENT: %s', why);
-		realDo();
+		const inspect = await docker_inspect(docker, target);
+		const text = JSON.stringify(inspect, null, 2);
+		if (/BUILDING['"]?\s*[=:]\s*['"]?yes/.test(text)) {
+			debug('%s is in building process. ignore.', target);
+			return;
+		} else {
+			debug('%s is not in building process. start generation.', target);
+		}
 	}
-}
-
-function delayGenerate() {
-	if (t) {
-		return;
-	}
-	if (!t) {
-		debug('wait %ss generate host...', WAIT_TIME / 1000);
-		t = setTimeout(() => {
-			debug('wait timeout reached, start generate');
-			t = null;
-			
-			realDo();
-		}, WAIT_TIME);
-	}
+	
+	await realDo();
+	gen_log('generator stopped');
 }
 
 let cache = {};
-function realDo() {
-	if (busy) {
-		gen_log('generator busy. stop.');
-		pending = true;
+async function realDo() {
+	gen_log('generator started.');
+	const containers = await docker_list_containers(docker);
+	const list: DockerInspect[] = await docker_inspect_all(docker, containers);
+	
+	if (cache_equal(list)) {
+		gen_log('nothing changed');
 		return;
 	}
 	
-	busy = true;
-	gen_log('generator started.');
-	docker_list_containers(docker).then((containers) => {
-		return docker_inspect_all(docker, containers);
-	}).then((list: DockerInspect[]) => {
-		if (cache_equal(list)) {
-			gen_log('nothing changed');
-			return;
+	const ps = handlers.map(fn => {
+		try {
+			return fn(list);
+		} catch (e) {
+			return Promise.reject(e);
 		}
-		re_cache(list);
-		
-		const wait = handlers.map((cb) => {
-			try {
-				return cb(list);
-			} catch (e) {
-				displayError(e);
-				return Promise.reject(e);
-			}
-		});
-		
-		const pWait = Promise.all(wait);
-		let t = setTimeout(() => {
-			t = null;
-			gen_log('------ generator not response in 10 seconds ------')
-		}, 10000);
-		const clean = () => {
-			if (t) {
-				clearTimeout(t);
-				t = null;
-			}
-		};
-		pWait.then(clean, clean);
-		
-		return pWait;
-	}).then(() => {
-		busy = false;
-		if (pending) {
-			gen_log('pending... prepare next generation.');
-			setImmediate(realDo);
-		}
-		gen_log('generator stopped.');
-	}, (e) => {
-		busy = false;
-		gen_log('generator error: ' + e.message);
-		setImmediate(() => {
-			throw e;
-		});
 	});
+	
+	await Promise.all(ps);
+	
+	re_cache(list);
+	
+	gen_log('generator completed.');
 }
 
 function re_cache(list: DockerInspect[]) {
 	cache = {};
 	list.forEach((insp) => {
 		cache[insp.Id] = true;
-	})
+	});
 }
 function cache_equal(list: DockerInspect[]) {
 	if (Object.keys(cache).length !== list.length) {
@@ -160,18 +133,21 @@ function cache_equal(list: DockerInspect[]) {
 	});
 }
 
-export interface Handler {
-	(allDockers: DockerInspect[]): void|Promise<any>;
-}
-
-let changeCount = 0;
-
-export function handleChange(cb: Handler) {
-	changeCount++;
-	debug('handle docker change (handler count=%s)', changeCount);
+export function handleChange(cb: Callback) {
+	debug('handle docker change: ', cb.name || '{anonymous}');
 	handlers.push(cb);
 }
 
-function displayError(e: Error) {
-	cb_error(e.stack);
+type Timeout = Promise<void>&{kill(): void};
+function timeout(ms: number): Timeout {
+	let to = null;
+	const p = <any>new Promise((resolve, reject) => {
+		to = setTimeout(() => {
+			resolve();
+		}, ms);
+	});
+	p.kill = () => {
+		clearTimeout(to);
+	};
+	return p;
 }
