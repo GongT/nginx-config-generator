@@ -35,6 +35,7 @@ export abstract class HttpServerConfigFile<T> extends ConfigFile<T&HttpTemplateO
 		
 		httpConfig.push(ConfigValuesBundle.fromArray('listen', this.listen));
 		httpConfig.push(new ConfigValue('server_name', this.option.server_name));
+		httpConfig.push(new ConfigValue('default_type', 'text/html'));
 		
 		return httpConfig;
 	}
