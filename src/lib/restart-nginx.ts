@@ -15,8 +15,8 @@ function timeout(ms: number): Promise<void> {
 }
 
 export async function reloadNginxConfig() {
-	debug_normal('wait 2s to restart nginx...');
-	await timeout(2000);
+	debug_normal('wait 3s to restart nginx...');
+	await timeout(3000);
 	
 	debug_normal('try to restart nginx...');
 	
