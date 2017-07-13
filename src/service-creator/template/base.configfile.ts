@@ -145,6 +145,10 @@ export abstract class ConfigFile<OptionType> {
 		return this;
 	}
 	
+	touchFile(fileTracker: FileTracker) {
+		fileTracker.know(this.fileAbsolutePath);
+	}
+	
 	writeFile(fileTracker: FileTracker) {
 		try {
 			const content = this.content;

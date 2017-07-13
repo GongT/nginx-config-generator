@@ -190,6 +190,9 @@ export class ServiceCreator {
 	
 	createTemplate(fileTracker: FileTracker) {
 		if (this.files) {
+			for (let file of this.files) {
+				file.touchFile(fileTracker);
+			}
 			debug_normal('unchanged service: "%s"', this.serviceName);
 			return;
 		}
