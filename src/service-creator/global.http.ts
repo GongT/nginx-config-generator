@@ -5,15 +5,14 @@ const s = JSON.stringify;
 function logContent(type: AccessLog) {
 	switch (type) {
 	case AccessLog.main:
-		return s(`$http_x_proxy_path $request_method $host$request_uri, STATUS $status, $body_bytes_sent bytes response`);
+		return s(`$http_x_proxy_path $request_method $host$request_uri, STATUS $status, $body_bytes_sent BYTES RESPONSE FROM $upstream_addr`);
 	case AccessLog.tiny:
-		return s(`$http_x_proxy_path $request_method $host$request_uri $status`);
+		return s(`$http_x_proxy_path $request_method $host$request_uri $status <- $upstream_addr`);
 	case AccessLog.cache:
-		return s(`-- $request_method $host$request_uri $status, $body_bytes_sent sent
-	Time: $upstream_response_time, CACHE: $upstream_cache_status`);
+		return s(`$http_x_proxy_path $request_method $host$request_uri $status. CACHE: $upstream_cache_status, FROM: $upstream_addr, SIZE: $body_bytes_sent`);
 	case AccessLog.robot:
-		return s(`[$time_local] "$request" FROM "$http_referer"
-	Status: $status "$http_user_agent"`);
+		return s(`[$time_local] "$request" FROM "$http_referer" Status: $status
+	"$http_user_agent"`);
 	}
 }
 
@@ -21,6 +20,7 @@ export enum AccessLog {
 	none = 0,
 	main,
 	tiny,
+	tiny_proxy,
 	cache,
 	robot,
 }
