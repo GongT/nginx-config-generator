@@ -45,6 +45,24 @@ runner.once(runner.EVENTS.END, () => {
 	NotifyInitCompleteEvent();
 });
 
+// debug
+const debugEnable = !process.env.RUN_IN_DOCKER;
+if (debugEnable) {
+	const rl = require('readline').createInterface({
+		input: process.stdin,
+		output: process.stdout,
+		prompt: '',
+	});
+	rl.on('line', (input) => {
+		console.log('\x1Bc');
+		runner.run('manual').then(() => {
+			console.log('\x1B[38;5;10m OK! \x1B[0m',);
+		}, (err) => {
+			console.log('\x1B[38;5;9m Error: %s \x1B[0m', err.message);
+		});
+	});
+}
+
 // watch
 emitter.on("connect", function () {
 	debug("connected to docker api");
@@ -88,17 +106,21 @@ async function scheduleGenerate(why: string, target?: string) {
 		}
 	}
 	
-	await realDo();
+	if (debugEnable && why === 'manual') {
+		await realDo(false);
+	} else {
+		await realDo();
+	}
 	gen_log('generator stopped');
 }
 
 let cache = {};
-async function realDo() {
+async function realDo(normal: boolean = true) {
 	gen_log('generator started.');
 	const containers = await docker_list_containers(docker);
 	const list: DockerInspect[] = await docker_inspect_all(docker, containers);
 	
-	if (cache_equal(list)) {
+	if (cache_equal(list) && normal) {
 		gen_log('nothing changed');
 		return;
 	}

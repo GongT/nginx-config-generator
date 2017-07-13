@@ -6,7 +6,18 @@ const debug_normal = createLogger(LEVEL.INFO, 'handle');
 const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
 const debug_nginx_error = createLogger(LEVEL.ERROR, 'nginx');
 
+function timeout(ms: number): Promise<void> {
+	return <any>new Promise((resolve, reject) => {
+		setTimeout(() => {
+			resolve();
+		}, ms);
+	});
+}
+
 export async function reloadNginxConfig() {
+	debug_normal('wait 2s to restart nginx...');
+	await timeout(2000);
+	
 	debug_normal('try to restart nginx...');
 	
 	let ret = await docker_exec(docker, 'nginx', ['nginx', '-t']).catch(logThrow);

@@ -2,6 +2,7 @@ import "@gongt/jenv-data/global";
 import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 import {lstatSync, readdirSync, rmdirSync, unlinkSync} from "fs";
 import {resolve} from "path";
+import {ReadLine} from "readline";
 import {debugPath, SERVICE_SAVE_FOLDER} from "./init/folders";
 import {defaultServer, globalFile, mainServiceLoader, serviceMapper, streamServiceLoader} from "./init/services";
 import {connectDocker, handleChange, initComplete} from "./lib/docker";
