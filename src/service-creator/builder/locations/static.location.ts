@@ -31,6 +31,11 @@ export class StaticLocation extends LocationBuilder<IStaticLocationConfig> {
 				key: "$request_method$request_uri",
 				cacheDays: 1,
 			},
+			upstream: {
+				url: `http://${this.upstream.getName(status.direction)}`,
+				stream: false,
+				Host: this.service.outerDomainName,
+			},
 		});
 		
 		yield new LocationConfigFile({

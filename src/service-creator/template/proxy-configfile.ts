@@ -76,7 +76,7 @@ export class ProxyConfigFile extends ConfigFile<ProxyOption> {
 		if (lock) {
 			proxy_cache.push(new ConfigValue('proxy_cache_lock', lock));
 		}
-		const mu = minUses? minUses.toString() : '5';
+		const mu = minUses? minUses.toString() : '3';
 		proxy_cache.push(new ConfigValue('proxy_cache_min_uses', mu));
 		if (revalidate) {
 			proxy_cache.push(new ConfigValue('proxy_cache_revalidate', revalidate));
