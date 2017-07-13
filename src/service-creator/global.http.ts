@@ -51,7 +51,7 @@ export class MainConfig extends ConfigFile<{}> {
 	}
 	
 	get fileName(): string {
-		return 'generate.conf';
+		return 'generated.conf';
 	}
 	
 	buildContent(): ConfigValuesBundle {
