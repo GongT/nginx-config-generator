@@ -28,6 +28,7 @@ export class CallbackRunner extends EventEmitter {
 			debug('callback error');
 			this.emit(this.EVENTS.ERROR, e);
 		}).then(() => {
+			this.promise = this.queuePromise = null;
 			debug('callback finished');
 			this.running = false;
 			this.emit(this.EVENTS.END);
