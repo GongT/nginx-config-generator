@@ -110,7 +110,6 @@ export class ProxyConfigFile extends ConfigFile<ProxyOption> {
 			url, stream, tryNext, ignoreClientAbourt,
 		} = this.option.upstream;
 		
-		proxy_pass.push(new ConfigValue('proxy_pass', url));
 		proxy_pass.push(new ConfigValue('proxy_http_version', '1.1'));
 		proxy_pass.push(new ConfigValue('proxy_connect_timeout', '2s'));
 		proxy_pass.push(new ConfigValue('proxy_next_upstream_tries', '3'));
@@ -142,6 +141,7 @@ export class ProxyConfigFile extends ConfigFile<ProxyOption> {
 			proxy_pass.push(new ConfigValue('proxy_ignore_client_abort', ignoreClientAbourt));
 		}
 		
+		proxy_pass.push(new ConfigValue('proxy_pass', url));
 		return proxy_pass;
 	}
 	
