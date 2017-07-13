@@ -2,6 +2,7 @@ import {JsonEnv} from "@gongt/jenv-data";
 import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 import {pathExistsSync} from "fs-extra";
 import {resolve} from "path";
+import {inspect} from "util";
 import {dockerNames} from "../init/docker-names";
 import {deepFreeze} from "../lib/deep-freeze";
 import {FileTracker} from "../lib/file-change-tracker";
@@ -9,72 +10,66 @@ import {isGatewayOfService, isGatewayServer, wantToRun} from "../lib/server-dete
 import {getServiceName} from "../lib/service-name";
 import {HttpServerBuilder} from "./builder/http-server-builder";
 import {StreamServerBuilder} from "./builder/stream-server-builder";
-import {IServiceConfig, IServiceStatus, RouteDirection} from "./config.define";
-import {Template} from "./template/base";
+import {IServiceConfig, IServiceStatus} from "./config.define";
+import {ServiceLoaderBuilder} from "./global.service";
+import {ConfigFile} from "./template/base.configfile";
 import IServersConfig = JsonEnvConfigModule.IServersConfig;
 import I1883Config = JsonEnvConfigModule.I1883Config;
 import extend = require('extend');
+
+const debug_config = createLogger(LEVEL.INFO, 'config');
 
 const debug_sill = createLogger(LEVEL.SILLY, 'generate');
 const debug_normal = createLogger(LEVEL.INFO, 'generate');
 const debug_notice = createLogger(LEVEL.NOTICE, 'generate');
 
 export class ServiceCreator {
-	protected config: IServiceConfig;
+	protected serviceConfig: IServiceConfig;
 	protected status: IServiceStatus = <any>{};
 	
-	protected stream: {income: StreamServerBuilder, outcome: StreamServerBuilder};
-	protected http: {income: HttpServerBuilder, outcome: HttpServerBuilder};
+	protected stream: StreamServerBuilder;
+	// protected stream_collector: GlobalFileCollector;
+	
+	protected http: HttpServerBuilder;
+	protected collector: ServiceLoaderBuilder;
+	
+	protected files: ConfigFile<any>[];
+	protected filesValid: string = null;
 	
 	constructor(public readonly serviceName: string) {
-		this.config = JsonEnv.services[serviceName];
-		if (!this.config) {
+		this.serviceConfig = JsonEnv.services[serviceName];
+		if (!this.serviceConfig) {
 			throw new Error('unknown service: ' + serviceName);
 		}
 		
-		this.config = extend(true, {
+		this.serviceConfig = extend(true, {
 			serviceName: getServiceName(serviceName),
 			machines: [],
 			interfaceMachine: [],
 			alias: [],
 			locations: {},
 			servers: {},
-		}, this.config);
+		}, this.serviceConfig);
 		
-		this.checkConfig(this.config);
+		this.checkConfig(this.serviceConfig);
 		
-		deepFreeze(this.config);
+		deepFreeze(this.serviceConfig);
+		debug_config('%s:\n-----------\n%s\n-----------', serviceName, inspect(this.serviceConfig, false, Infinity, true));
 		
-		this.createStream();
-		this.createHttp();
-	}
-	
-	private createHttp() {
-		this.http = {
-			income: new HttpServerBuilder({
-				direction: RouteDirection.IN,
-				config: this.config,
-			}),
-			outcome: new HttpServerBuilder({
-				direction: RouteDirection.OUT,
-				config: this.config,
-			}),
-		};
-	}
-	
-	private createStream() {
-		const {servers} = this.config;
-		if (!Object.keys(servers).length) {
-			return;
+		this.collector = new ServiceLoaderBuilder({service: this.serviceConfig}, {});
+		
+		this.http = new HttpServerBuilder({service: this.serviceConfig}, {});
+		
+		const {servers} = this.serviceConfig;
+		if (Object.keys(servers).length) {
+			this.stream = new StreamServerBuilder({service: this.serviceConfig}, {
+				servers: Object.values(servers),
+			});
 		}
-		this.stream = {
-			income: new StreamServerBuilder({
-				servers,
-			}),
-			outcome: new StreamServerBuilder({
-				servers,
-			}),
-		};
+	}
+	
+	get hasStreamServer() {
+		return !!this.stream;
 	}
 	
 	private checkConfig(config: IServiceConfig) {
@@ -135,30 +130,42 @@ export class ServiceCreator {
 				locations[location].location = location;
 			}
 		});
+		if (!locations['/']) {
+			locations['/'] = {
+				type: 'root',
+				location: '/',
+			}
+		}
 		
 		if (!config.servers) {
 			config.servers = {};
 		}
 		const servers = config.servers;
-		Object.keys(servers).forEach((outPort) => {
-			if (typeof servers[outPort] === 'string' || typeof servers[outPort] === 'number') {
-				servers[outPort] = {
-					outPort: <any>outPort,
-					port: parseInt(<any>servers[outPort]),
+		Object.keys(servers).forEach((name) => {
+			if (typeof servers[name] === 'string' || typeof servers[name] === 'number') {
+				servers[name] = {
+					name,
+					port: parseInt(<any>servers[name]),
 				}
 			}
 		});
 	}
 	
 	private publicStatus() {
-		if (this.config.SSL) {
+		if (this.serviceConfig.SSL) {
 			this.status.SSLExists = ['fullchain.pem', 'privkey.pem', 'chain.pem'].every((file) => {
-				return pathExistsSync(resolve(this.config.SSLPath, file));
+				return pathExistsSync(resolve(this.serviceConfig.SSLPath, file));
 			});
+		} else {
+			this.status.SSLExists = false;
 		}
 	}
 	
 	noDocker() {
+		if (this.filesValid !== null) { // changed
+			this.files = null;
+		}
+		this.filesValid = null;
 		this.status.localRunning = false;
 		this.status.dockerHost = null;
 		this.status.nameAlias = [];
@@ -166,30 +173,50 @@ export class ServiceCreator {
 	}
 	
 	docker(dockerInspect: DockerInspect) {
-		this.status.localRunning = dockerInspect.State.Running;
+		if (!dockerInspect.State.Running) {
+			return this.noDocker();
+		}
+		if (this.filesValid === dockerInspect.Id) { // un-changed
+			return;
+		}
+		this.files = null;
+		this.filesValid = dockerInspect.Id;
+		
+		this.status.localRunning = true;
 		this.status.dockerHost = dockerInspect.Config.Hostname;
 		this.status.nameAlias = dockerNames(dockerInspect);
 		this.publicStatus();
 	}
 	
 	createTemplate(fileTracker: FileTracker) {
-		const templates: Template[] = [];
+		if (this.files) {
+			debug_normal('unchanged service: "%s"', this.serviceName);
+			return;
+		}
+		debug_normal('create service file for "%s"', this.serviceName);
+		const configFiles: ConfigFile<any>[] = [];
 		if (this.http) {
-			templates.push(this.http.income.buildTemplate(this.status));
-			templates.push(this.http.outcome.buildTemplate(this.status));
+			debug_normal('  http:');
+			for (let file of this.http.configFiles(this.status)) {
+				debug_normal('    %s', file.inspect());
+				configFiles.push(file);
+			}
 		}
 		
 		if (this.stream) {
-			templates.push(this.stream.income.buildTemplate(this.status));
-			templates.push(this.stream.outcome.buildTemplate(this.status));
-		}
-		
-		for (let template of templates) {
-			if (template) {
-				template.writeFiles(fileTracker);
-			} else {
-				debug_notice('a builder not return any template');
+			debug_normal('  stream:');
+			for (let file of this.stream.configFiles(this.status)) {
+				configFiles.push(file);
 			}
 		}
+		
+		for (let file of this.collector.configFiles(this.status)) {
+			configFiles.push(file);
+		}
+		
+		for (let file of configFiles) {
+			file.writeFile(fileTracker);
+		}
+		this.files = configFiles;
 	}
 }

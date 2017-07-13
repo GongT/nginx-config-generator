@@ -5,7 +5,7 @@ export function dockerNames(inspect: DockerInspect): string[] {
 	
 	const name = inspect.Name.replace(/^\//, '').replace(/\//g, '.');
 	
-	ret.push(inspect.Id, name);
+	ret.push(name);
 	
 	if (inspect.Config.Labels && inspect.Config.Labels['org.special-label.alias']) {
 		try {
@@ -19,6 +19,8 @@ export function dockerNames(inspect: DockerInspect): string[] {
 			console.error('Cannot parse label of docker %s: %s', inspect.Name, e.message);
 		}
 	}
+	
+	ret.push(inspect.Id);
 	
 	return ret.filter(unique);
 }

@@ -1,46 +1,42 @@
-import {Builder, IServiceConfig, IServiceStatus, RouteDirection} from "../config.define";
-import {HttpTemplate} from "../template/http-template";
+import {unique} from "../../init/docker-names";
+import {directionName} from "../config.define";
+import {ConfigFile} from "../template/base.configfile";
+import {GlobalBodyConfigFile} from "../template/header-passing-configfile";
+import {HttpConfigFile} from "../template/http-configfile";
+import {LocationConfigFile} from "../template/location-configfile";
+import {Builder} from "./base.builder";
 import {LocationBuilder} from "./location-builder";
 import {createLocationRender} from "./location.factory";
-import {UpstreamBuilder} from "./upstream-builder";
 
 export interface IHttpServerConfig {
-	direction: RouteDirection;
-	config: IServiceConfig;
 }
 
-export class HttpServerBuilder implements Builder {
-	protected locations: LocationBuilder[];
-	protected direction: RouteDirection;
-	protected config: IServiceConfig;
-	
-	protected upstream: UpstreamBuilder;
-	
-	constructor({direction, config}: IHttpServerConfig) {
-		this.direction = direction;
-		this.config = config;
-		this.locations = this.createLocations();
-		this.upstream = this.createUpstream();
-	}
-	
-	private createLocations() {
-		const {locations} = this.config;
-		return Object.keys(locations).map((location) => {
-			return createLocationRender(locations[location], this.config);
+export class HttpServerBuilder extends Builder<IHttpServerConfig> {
+	init(config: IHttpServerConfig) {
+		const {locations: locationConfig} = this.service;
+		
+		const locations: LocationBuilder<any>[] = [];
+		if (this.service.SSL) {
+			createLocationRender(locations, {
+				location: '/.well-known',
+				type: 'well-known',
+			}, this.service);
+		}
+		
+		Object.keys(locationConfig).forEach((location, index) => {
+			createLocationRender(locations, locationConfig[location], this.service);
 		});
+		this.auto(...locations);
+		this.include(HttpConfigFile, GlobalBodyConfigFile);
+		this.include(HttpConfigFile, LocationConfigFile);
 	}
 	
-	private createUpstream() {
-		return new UpstreamBuilder({
-			serviceName: this.config.serviceName,
-			interfaceMachine: this.config.interfaceMachine,
-			machines: this.config.machines,
-			direction: this.direction,
-			port: 80,
+	protected *buildConfigFile(status): IterableIterator<ConfigFile<any>> {
+		yield new GlobalBodyConfigFile({});
+		yield new HttpConfigFile({
+			direction: directionName(status.direction),
+			server_name: [...this.service.alias, ...status.nameAlias].filter(unique),
+			Host: this.service.outerDomainName,
 		});
-	}
-	
-	buildTemplate(status: IServiceStatus): HttpTemplate {
-		return undefined; // TODO
 	}
 }

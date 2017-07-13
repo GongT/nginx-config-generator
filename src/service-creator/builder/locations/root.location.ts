@@ -4,10 +4,10 @@ import {LocationConfigFile} from "../../template/location-configfile";
 import {ProxyConfigFile} from "../../template/proxy-configfile";
 import {LocationBuilder} from "../location-builder";
 
-export interface ISocketLocationConfig extends ILocationConfig {
+export interface IRootLocationConfig extends ILocationConfig {
 }
 
-export class WebsocketLocation extends LocationBuilder<ISocketLocationConfig> {
+export class RootLocation extends LocationBuilder<IRootLocationConfig> {
 	init() {
 		this.createUpstream();
 		this.include(LocationConfigFile, ProxyConfigFile)
@@ -15,21 +15,21 @@ export class WebsocketLocation extends LocationBuilder<ISocketLocationConfig> {
 	
 	protected *buildLocationFile(status, location): any {
 		yield new ProxyConfigFile({
-			id: this.id,
+			id: 'root',
 			upstream: {
 				url: `http://${this.upstream.getName(status.direction)}$request_uri$is_args$args`,
-				stream: true,
+				stream: false,
 				Host: this.service.outerDomainName,
 			},
 		});
 		
 		yield new LocationConfigFile({
+			id: 'root',
 			location: location.location,
-			id: this.id,
 			log: {
-				access: AccessLog.none,
-				error: 'warn',
+				access: AccessLog.tiny,
+				error: 'info',
 			},
-		});
+		})
 	}
 }

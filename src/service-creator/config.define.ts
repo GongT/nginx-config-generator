@@ -1,8 +1,11 @@
-import {Template} from "./template/base";
-
 export enum RouteDirection {
-	IN,
-	OUT,
+	NULL = -1,
+	IN = 0,
+	OUT = 1,
+}
+
+export function directionName(d: RouteDirection) {
+	return RouteDirection[d].toLowerCase();
 }
 
 export interface IServiceConfig {
@@ -18,16 +21,18 @@ export interface IServiceConfig {
 	interfaceMachine: string[];
 	alias: string[],
 	extraBodyString: string;
-	locations: {[path: string]: ILocationConfigBase};
+	locations: {[path: string]: ILocationConfig};
 	servers: {[port: string]: IStreamServerConfig};
 }
-export interface ILocationConfigBase {
+export interface ILocationConfig {
 	location: string;
 	type: string;
+	name?: string;
 }
 export interface IStreamServerConfig {
+	protocol?: string;
 	port: number;
-	outPort: number;
+	name: string;
 }
 
 export interface IServiceStatus {
@@ -42,7 +47,10 @@ export interface IServiceStatus {
 	dockerHost: string;
 	localRunning: boolean;
 }
-
-export interface Builder {
-	buildTemplate(status: IServiceStatus): Template;
+export interface IExtraStatus {
+	direction: RouteDirection
+}
+export interface PassingData {
+	readonly direction: RouteDirection;
+	readonly serviceName: string;
 }

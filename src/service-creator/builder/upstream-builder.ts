@@ -1,69 +1,98 @@
 import {inSameNetworkWithMe, isGatewayServer, isNotMe} from "../../lib/server-detect";
-import {Builder, IServiceStatus, RouteDirection} from "../config.define";
-import {Template} from "../template/base";
-import {UpstreamTemplate} from "../template/upstream-template";
+import {directionName, RouteDirection} from "../config.define";
+import {UpstreamConfig, UpstreamServers} from "../template/upstream-configfile";
+import {Builder} from "./base.builder";
 
 export interface IUpstreamConfig {
-	serviceName: string;
 	interfaceMachine: string[];
 	machines: string[];
-	direction: RouteDirection;
-	port: number;
+	keepalive?: number;
+	port?: number;
+	protocol?: string;
 }
 
-export class UpstreamBuilder implements Builder {
-	protected serviceName: string;
+export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 	protected gateways: string[];
 	protected upstreams: string[];
-	protected direction: RouteDirection;
 	protected port: number;
+	protected keepalive: number;
+	protected isStream: boolean;
 	
-	constructor(config: IUpstreamConfig) {
-		this.serviceName = config.serviceName;
+	init(config: IUpstreamConfig) {
 		this.gateways = config.interfaceMachine.filter(isNotMe);
 		this.upstreams = config.machines.filter(isNotMe).filter(inSameNetworkWithMe);
-		this.direction = config.direction;
-		this.port = config.port;
-	}
-	
-	private buildRouteIn(route: string[]) { // route from outside to xxx
-		if (isGatewayServer()) {
-			route.push(...this.upstreams);
+		if (!config.protocol) {
+			config.protocol = 'http';
 		}
-	}
-	
-	private buildRouteOut(route: string[]) { // route from outside to xxx
-		if (isGatewayServer()) {
-			route.push(...this.upstreams);
+		this.isStream = config.protocol === 'tcp' || config.protocol === 'udp';
+		if (this.isStream) {
+			if (config.hasOwnProperty('keepalive')) {
+				throw new Error(`"${config.protocol}" upstream cannot have keep-alive`);
+			}
 		} else {
-			route.push(...this.gateways);
+			this.keepalive = config.keepalive || 16;
+		}
+		this.port = config.port || 80;
+	}
+	
+	private buildRouteIn(servers: UpstreamServers) { // route from outside to xxx
+		if (isGatewayServer()) {
+			for (let server of this.upstreams) {
+				servers[server] = {port: this.port, weight: 50};
+			}
 		}
 	}
 	
-	buildTemplate(status: IServiceStatus): Template {
-		const route = []; // route from inside to outside
+	private buildRouteOut(servers: UpstreamServers) { // route from outside to xxx
+		if (isGatewayServer()) {
+			for (let server of this.upstreams) {
+				servers[server] = {port: this.port, weight: 50};
+			}
+		} else {
+			for (let server of this.gateways) {
+				servers[server] = {port: this.port, weight: 10};
+			}
+		}
+	}
+	
+	private buildNotExists(servers: UpstreamServers) {
+		servers['127.0.0.1'] = {port: 18281, weight: 1, backup: true};
+	}
+	
+	protected *buildConfigFile(status) {
+		const direction = status.direction;
+		const route: UpstreamServers = {}; // route from inside to outside
 		if (status.localRunning) {
-			route.push(status.dockerHost);
+			route[status.dockerHost] = {port: this.port, weight: 100};
 		}
 		
-		if (this.direction === RouteDirection.IN) {
+		if (direction === RouteDirection.IN) {
 			this.buildRouteIn(route);
 		} else {
 			this.buildRouteOut(route);
 		}
 		
-		let name: string;
-		if (route.length === 0) {
-			name = 'no-upstream-exists';
-		} else {
-			name = this.createName(this.serviceName, this.direction);
+		if (Object.keys(route).length === 0) {
+			this.buildNotExists(route);
 		}
 		
-		return new UpstreamTemplate(name, route);
+		// const n = this.isStream? `${this.service.serviceName}-` : '';
+		const p = this.port === 80? '' : `-${this.port}`;
+		const name: string = this.getName(direction);
+		
+		yield new UpstreamConfig({
+			name: name,
+			servers: route,
+			id: directionName(direction) + p,
+			protocol: this.config.protocol,
+			keepalive: this.keepalive,
+			hashKey: '',
+		});
 	}
 	
-	private createName(serviceName: string, direction: RouteDirection) {
-		return `upstream_${serviceName}_${RouteDirection[direction]}_${this.port}`;
+	getName(direction: RouteDirection) {
+		const dirName = directionName(direction);
+		return `upstream_${this.service.serviceName}_${dirName}_${this.port}`;
 	}
 }
 

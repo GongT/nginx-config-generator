@@ -1,9 +1,9 @@
 import "@gongt/jenv-data/global";
 import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
-import {lstatSync, readdirSync, unlinkSync} from "fs";
+import {lstatSync, readdirSync, rmdirSync, unlinkSync} from "fs";
 import {resolve} from "path";
-import {SERVER_SAVE_FOLDER, SERVICE_SAVE_FOLDER} from "./init/folders";
-import {serviceMapper} from "./init/services";
+import {debugPath, SERVICE_SAVE_FOLDER} from "./init/folders";
+import {defaultServer, globalFile, mainServiceLoader, serviceMapper, streamServiceLoader} from "./init/services";
 import {connectDocker, handleChange, initComplete} from "./lib/docker";
 import {FileTracker} from "./lib/file-change-tracker";
 import {reloadNginxConfig} from "./lib/restart-nginx";
@@ -42,10 +42,14 @@ handleChange(async (list: DockerInspect[]) => {
 		creator.createTemplate(fileTracker);
 	}
 	
+	mainServiceLoader.configFile().writeFile(fileTracker);
+	streamServiceLoader.configFile().writeFile(fileTracker);
+	globalFile.configFile().writeFile(fileTracker);
+	defaultServer.configFile().writeFile(fileTracker);
+	
 	// debug_normal(`creating config files in "${SERVICE_SAVE_FOLDER}".`);
 	
 	removeUnusedFiles(SERVICE_SAVE_FOLDER, fileTracker);
-	removeUnusedFiles(SERVER_SAVE_FOLDER, fileTracker);
 	
 	// if not inited, force load
 	if (fileTracker.hasSomeChange() || !initComplete) {
@@ -54,27 +58,40 @@ handleChange(async (list: DockerInspect[]) => {
 });
 
 function removeUnusedFiles(root: string, fileTracker: FileTracker): boolean {
-	let changed = false;
+	let allDeleted = true;
 	readdirSync(root).forEach((f) => {
 		if (f === '.' || f === '..') {
 			return;
 		}
-		const file = resolve(root, f);
+		let absPath = resolve(root, f);
 		
-		if (!fileTracker.isKnown(file)) {
-			if (lstatSync(file).isDirectory()) {
-				debug_normal('removing unknown file in directory: %s', file);
-				removeUnusedFiles(file, fileTracker);
+		if (fileTracker.isKnown(absPath)) {
+			allDeleted = false;
+		} else {
+			let fileDebug = debugPath(absPath);
+			if (lstatSync(absPath).isDirectory()) {
+				fileDebug += '/';
+				debug_silly('removing unknown file in directory: %s', fileDebug);
+				const subEmpty = removeUnusedFiles(absPath, fileTracker);
+				if (subEmpty) {
+					debug_normal('  noting left in %s, remove folder.', absPath);
+					try {
+						rmdirSync(absPath);
+					} catch (e) {
+						debug_notice('  remove folder error: %s', debugPath(e.message));
+					}
+					allDeleted = true;
+				}
 			} else {
-				fileTracker.know(file);
-				debug_normal('removing old unknown file: %s', file);
+				debug_normal('removing old unknown file: %s', fileDebug);
 				try {
-					unlinkSync(file);
+					unlinkSync(absPath);
 				} catch (e) {
 					debug_notice('remove file error: %s', e.message);
 				}
 			}
 		}
 	});
-	return changed;
+	
+	return allDeleted;
 }

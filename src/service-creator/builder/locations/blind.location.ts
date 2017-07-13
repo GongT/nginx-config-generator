@@ -1,9 +1,24 @@
-import {IServiceStatus} from "../../config.define";
-import {LocationTemplate} from "../../template/location-template";
+import {ILocationConfig} from "../../config.define";
+import {AccessLog} from "../../global.http";
+import {LocationConfigFile} from "../../template/location-configfile";
 import {LocationBuilder} from "../location-builder";
 
-export class BlindLocation extends LocationBuilder {
-	buildTemplate(status: IServiceStatus): LocationTemplate {
-		return undefined;
+export interface IBlindLocationConfig extends ILocationConfig {
+}
+
+export class BlindLocation extends LocationBuilder<IBlindLocationConfig> {
+	protected *buildLocationFile(status, location): any {
+		
+		yield new LocationConfigFile({
+			location: location.location,
+			id: this.id,
+			log: {
+				access: AccessLog.tiny,
+				error: 'warn',
+			},
+			content: `# blind
+add_header             Cache-Control "public";
+expires                24h;return 404;`,
+		});
 	}
 }
