@@ -46,6 +46,35 @@ export class HttpConfigFile extends HttpServerConfigFile<{}> {
 	}
 }
 
+export class FakeHttpsConfigFile extends HttpServerConfigFile<{}> {
+	private sslConfig: ConfigValuesBundle;
+	
+	init() {
+		const config = this.sslConfig = new ConfigValuesBundle('fake ssl');
+		
+		config.push(new ConfigValue('ssl_certificate', 'conf.d/ss-nginx.crt'));
+		config.push(new ConfigValue('ssl_certificate_key', 'conf.d/ss-nginx.key'));
+		
+		config.push(new ConfigValue('ssl_protocols', ['TLSv1', 'TLSv1.1', 'TLSv1.2']));
+	}
+	
+	get type() {
+		return 'fake-https';
+	}
+	
+	get listen() {
+		return ['443 ssl', '[::]:443 ssl'];
+	}
+	
+	buildContent() {
+		const config = super.buildContent();
+		
+		config.push(this.sslConfig);
+		
+		return config;
+	}
+}
+
 export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string, allowInsecure: Boolean}> {
 	private sslConfig: ConfigValuesBundle;
 	

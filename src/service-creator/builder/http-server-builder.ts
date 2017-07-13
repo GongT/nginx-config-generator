@@ -2,7 +2,7 @@ import {unique} from "../../init/docker-names";
 import {directionName} from "../config.define";
 import {ConfigFile} from "../template/base.configfile";
 import {GlobalBodyConfigFile} from "../template/header-passing-configfile";
-import {HttpConfigFile, HttpJumpConfigFile, HttpsConfigFile} from "../template/http-configfile";
+import {FakeHttpsConfigFile, HttpConfigFile, HttpJumpConfigFile, HttpsConfigFile} from "../template/http-configfile";
 import {LocationConfigFile} from "../template/location-configfile";
 import {Builder} from "./base.builder";
 import {LocationBuilder} from "./location-builder";
@@ -71,6 +71,11 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 					// normal http included in https
 				}
 			} else {
+				yield new FakeHttpsConfigFile({
+					direction: direction,
+					server_name: server_name,
+					Host: this.service.outerDomainName,
+				});
 				yield normal(); // normal http
 			}
 		} else {

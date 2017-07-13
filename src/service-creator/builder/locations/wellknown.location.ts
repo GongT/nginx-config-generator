@@ -11,7 +11,7 @@ export class WellknownLocationConfigFile extends LocationConfigFile {
 
 export class WellknownLocation extends LocationBuilder<IWellknownLocationConfig> {
 	protected *buildLocationFile(status) {
-		if (status.direction !== RouteDirection.OUT) {
+		if (status.direction === RouteDirection.OUT) {
 			return;
 		}
 		yield new WellknownLocationConfigFile({
