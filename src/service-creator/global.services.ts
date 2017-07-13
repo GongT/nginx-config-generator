@@ -1,5 +1,3 @@
-import {resolve} from "path";
-import {CONFIGFILE_PATH} from "../init/folders";
 import {ConfigFile, KnownStore} from "./template/base.configfile";
 import {ConfigValue, ConfigValuesBundle} from "./template/nginx-config-structure";
 
@@ -38,10 +36,7 @@ export class MainInit extends ConfigFile<{services: string[]}> {
 		const config = new ConfigValuesBundle('loader');
 		
 		for (let service of this.option.services) {
-			config.push(new ConfigValue('include',
-				resolve(this.filePath, '../services', service, 'service.conf')
-					.replace(CONFIGFILE_PATH + '/', ''),
-			));
+			config.push(new ConfigValue('include', this.resolveRelative('services', service, 'service.conf')));
 		}
 		
 		return config;

@@ -83,27 +83,29 @@ export abstract class ConfigFile<OptionType> {
 		return `${this.constructor.name} [${this.debugInspect()}] -> "${this.fileName}"`;
 	}
 	
-	get includeLocation() {
-		return this.filePath.replace(CONFIGFILE_PATH, '').replace(/^\//, '');
+	get includeLocation(): string {
+		return this.resolveRelative(this.fileName);
 	}
 	
-	get filePath() {
-		let basePath;
+	resolveRelative(...paths: string[]): string {
+		return resolve(this.filePath, ...paths).replace(CONFIGFILE_PATH, '').replace(/^\//, '');
+	}
+	
+	private get fileAbsolutePath() {
+		return resolve(this.filePath, this.fileName)
+	}
+	
+	private get filePath() {
 		switch (this.fileStore) {
 		case KnownStore.SERVICE:
-			basePath = resolve(SERVICE_SAVE_FOLDER, 'services', this.serviceName);
-			break;
+			return resolve(SERVICE_SAVE_FOLDER, 'services', this.serviceName);
 		case KnownStore.LOADER:
-			basePath = SERVICE_SAVE_FOLDER;
-			break;
+			return SERVICE_SAVE_FOLDER;
 		case KnownStore.HTTP:
-			basePath = resolve(CONFIGFILE_PATH, 'conf.d');
-			break;
+			return resolve(CONFIGFILE_PATH, 'conf.d');
 		case KnownStore.STREAM_SERVER:
-			basePath = resolve(SERVICE_SAVE_FOLDER, 'streams', this.serviceName);
-			break;
+			return resolve(SERVICE_SAVE_FOLDER, 'streams', this.serviceName);
 		}
-		return resolve(basePath, this.fileName);
 	}
 	
 	public abstract get fileStore(): KnownStore;
@@ -146,7 +148,7 @@ export abstract class ConfigFile<OptionType> {
 	writeFile(fileTracker: FileTracker) {
 		try {
 			const content = this.content;
-			const write = new FileWrite(this.filePath, content);
+			const write = new FileWrite(this.fileAbsolutePath, content);
 			write.doneWith(fileTracker);
 		} catch (e) {
 			e.message += ` in ${this.constructor.name}(${this.serviceName})`;

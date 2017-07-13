@@ -56,7 +56,7 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 	}
 	
 	private buildNotExists(servers: UpstreamServers) {
-		servers['127.0.0.1'] = {port: 18281, weight: 1, backup: true};
+		servers['127.0.0.1'] = {port: 18281, weight: 1};
 	}
 	
 	protected *buildConfigFile(status) {

@@ -1,3 +1,4 @@
+import {CACHE_FOLDER} from "../../init/folders";
 import {ConfigFile, KnownStore} from "./base.configfile";
 import {ConfigValue, stringifyValue} from "./nginx-config-structure";
 
@@ -47,7 +48,7 @@ export class CacheConfigFile extends ConfigFile<CacheOption> {
 		};
 		
 		return new ConfigValue('proxy_cache_path', [
-			path || `/tmp/nginx-cache/${this.zone}`,
+			path || `${CACHE_FOLDER}/${this.zone}`,
 			...stringifyValue(options, true)
 		]);
 	}

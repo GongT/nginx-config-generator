@@ -1,5 +1,3 @@
-import {resolve} from "path";
-import {CONFIGFILE_PATH} from "../init/folders";
 import {Builder} from "./builder/base.builder";
 import {IExtraStatus, IServiceStatus, RouteDirection} from "./config.define";
 import {ConfigFile, KnownStore} from "./template/base.configfile";
@@ -31,15 +29,9 @@ export class ServerInit extends ConfigFile<{}> {
 	buildContent(): ConfigValuesBundle {
 		const config = new ConfigValuesBundle(this.serviceName);
 		
-		config.push(new ConfigValue('include',
-			resolve(this.filePath, '../caches/*.conf').replace(CONFIGFILE_PATH, ''),
-		));
-		config.push(new ConfigValue('include',
-			resolve(this.filePath, '../upstreams/*.conf').replace(CONFIGFILE_PATH, ''),
-		));
-		config.push(new ConfigValue('include',
-			resolve(this.filePath, '../routes/*.conf').replace(CONFIGFILE_PATH, ''),
-		));
+		config.push(new ConfigValue('include', this.resolveRelative('caches/*.conf')));
+		config.push(new ConfigValue('include', this.resolveRelative('upstreams/*.conf')));
+		config.push(new ConfigValue('include', this.resolveRelative('routes/*.conf')));
 		
 		return config;
 	}

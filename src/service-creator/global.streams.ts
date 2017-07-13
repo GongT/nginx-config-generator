@@ -1,5 +1,3 @@
-import {resolve} from "path";
-import {CONFIGFILE_PATH} from "../init/folders";
 import {ConfigFile, KnownStore} from "./template/base.configfile";
 import {ConfigValue, ConfigValuesBundle} from "./template/nginx-config-structure";
 
@@ -38,14 +36,8 @@ export class StreamInit extends ConfigFile<{services: string[]}> {
 		const config = new ConfigValuesBundle('stream loader');
 		
 		for (let service of this.option.services) {
-			config.push(new ConfigValue('include',
-				resolve(this.filePath, '../streams', service, 'upstreams/*.conf')
-					.replace(CONFIGFILE_PATH + '/', ''),
-			));
-			config.push(new ConfigValue('include',
-				resolve(this.filePath, '../streams', service, '*.conf')
-					.replace(CONFIGFILE_PATH + '/', ''),
-			));
+			config.push(new ConfigValue('include', this.resolveRelative('streams', service, 'upstreams/*.conf')));
+			config.push(new ConfigValue('include', this.resolveRelative('streams', service, '*.conf')));
 		}
 		
 		return config;

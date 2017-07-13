@@ -18,6 +18,9 @@ export function debugPath(str: string) {
 	return str.replace(SERVICE_SAVE_FOLDER + '/', '').replace(CONFIGFILE_PATH, '');
 }
 
+export const CACHE_FOLDER = '/tmp';
+
 export function init() {
 	ensureDirSync(SERVICE_SAVE_FOLDER);
+	ensureDirSync(CACHE_FOLDER);
 }
