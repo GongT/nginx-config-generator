@@ -17,7 +17,7 @@ export class RootLocation extends LocationBuilder<IRootLocationConfig> {
 		yield new ProxyConfigFile({
 			id: 'root',
 			upstream: {
-				url: `http://${this.upstream.getName(status.direction)}$request_uri$is_args$args`,
+				url: `http://${this.upstream.getName(status.direction)}`,
 				stream: false,
 				Host: this.service.outerDomainName,
 			},

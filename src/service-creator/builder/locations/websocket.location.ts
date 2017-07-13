@@ -17,7 +17,7 @@ export class WebsocketLocation extends LocationBuilder<ISocketLocationConfig> {
 		yield new ProxyConfigFile({
 			id: this.id,
 			upstream: {
-				url: `http://${this.upstream.getName(status.direction)}$request_uri$is_args$args`,
+				url: `http://${this.upstream.getName(status.direction)}`,
 				stream: true,
 				Host: this.service.outerDomainName,
 			},
