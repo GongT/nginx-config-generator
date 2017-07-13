@@ -1,14 +1,20 @@
-import {ILocationConfig, IServiceStatus} from "../../config.define";
+import {ILocationConfig, RouteDirection} from "../../config.define";
+import {AccessLog} from "../../global.http";
 import {LocationConfigFile} from "../../template/location-configfile";
 import {LocationBuilder} from "../location-builder";
-import {AccessLog} from "../../global.http";
 
 export interface IWellknownLocationConfig extends ILocationConfig {
 }
 
+export class WellknownLocationConfigFile extends LocationConfigFile {
+}
+
 export class WellknownLocation extends LocationBuilder<IWellknownLocationConfig> {
-	protected *buildLocationFile(status: IServiceStatus) {
-		yield new LocationConfigFile({
+	protected *buildLocationFile(status) {
+		if (status.direction !== RouteDirection.OUT) {
+			return;
+		}
+		yield new WellknownLocationConfigFile({
 			location: '/.well-known',
 			id: 'well-known',
 			log: {

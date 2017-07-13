@@ -42,7 +42,7 @@ export abstract class Builder<SubType> implements BuilderInterface {
 			for (let {me, want}of this.includes) {
 				if (self.constructor === me) {
 					for (let other of list) {
-						if (other.constructor === want) {
+						if (other instanceof want) {
 							self.include(other);
 						}
 					}
