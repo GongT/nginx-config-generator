@@ -1,13 +1,12 @@
 import {unique} from "../../init/docker-names";
-import {directionName} from "../config.define";
+import {directionName, RouteDirection} from "../config.define";
 import {ConfigFile} from "../template/base.configfile";
 import {GlobalBodyConfigFile} from "../template/header-passing-configfile";
-import {FakeHttpsConfigFile, HttpConfigFile, HttpJumpConfigFile, HttpsConfigFile} from "../template/http-configfile";
+import {FakeHttpsConfigFile, HttpConfigFile, HttpsConfigFile} from "../template/http-configfile";
 import {LocationConfigFile} from "../template/location-configfile";
 import {Builder} from "./base.builder";
 import {LocationBuilder} from "./location-builder";
 import {createLocationRender} from "./location.factory";
-import {WellknownLocationConfigFile} from "./locations/wellknown.location";
 
 export interface IHttpServerConfig {
 }
@@ -34,8 +33,6 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 		
 		this.include(HttpConfigFile, LocationConfigFile);
 		this.include(HttpsConfigFile, LocationConfigFile);
-		
-		this.include(HttpJumpConfigFile, WellknownLocationConfigFile);
 	}
 	
 	protected *buildConfigFile(status): IterableIterator<ConfigFile<any>> {
@@ -52,24 +49,15 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 			});
 		};
 		
-		if (this.service.SSL) {
+		if (this.service.SSL && status.direction === RouteDirection.IN) {
 			if (status.SSLExists) {
 				yield new HttpsConfigFile({
 					direction: direction,
 					server_name: server_name,
 					Host: this.service.outerDomainName,
 					certPath: this.service.SSLPath,
-					allowInsecure: !this.service.SSLJump,
+					allowInsecure: true,
 				});
-				if (this.service.SSLJump) {
-					yield new HttpJumpConfigFile({
-						direction: direction,
-						server_name: server_name,
-						Host: this.service.outerDomainName,
-					});
-				} else {
-					// normal http included in https
-				}
 			} else {
 				yield new FakeHttpsConfigFile({
 					direction: direction,
@@ -79,7 +67,7 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 				yield normal(); // normal http
 			}
 		} else {
-			yield normal(); // nrmal http
+			yield normal(); // normal http
 		}
 	}
 }
