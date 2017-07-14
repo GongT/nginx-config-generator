@@ -31,20 +31,27 @@ export abstract class Builder<SubType> implements BuilderInterface {
 	
 	protected abstract init(config: SubType): void;
 	
-	private includes: {me: ConfigFileCreator<any>; want: ConfigFileCreator<any>}[];
+	private includes: {me: ConfigFileCreator<any>; want: ConfigFileCreator<any>, inherit: boolean}[];
 	
-	protected include(me: ConfigFileCreator<any>, want: ConfigFileCreator<any>) {
-		this.includes.push({me, want});
+	protected include(me: ConfigFileCreator<any>, want: ConfigFileCreator<any>, inherit: boolean = true) {
+		this.includes.push({me, want, inherit});
 	}
 	
 	private includeYield(list: ConfigFile<any>[]) {
 		for (let self of list) {
-			for (let {me, want}of this.includes) {
+			for (let {me, want, inherit}of this.includes) {
 				if (self.constructor === me) {
 					for (let other of list) {
-						if (other instanceof want) {
-							self.include(other);
+						if (inherit) {
+							if (other instanceof want) {
+								self.include(other);
+							}
+						} else {
+							if (other.constructor === want) {
+								self.include(other);
+							}
 						}
+						
 					}
 				}
 			}

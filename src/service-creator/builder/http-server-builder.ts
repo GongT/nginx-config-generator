@@ -4,6 +4,7 @@ import {ConfigFile} from "../template/base.configfile";
 import {GlobalBodyConfigFile} from "../template/header-passing-configfile";
 import {FakeHttpsConfigFile, HttpConfigFile, HttpsConfigFile} from "../template/http-configfile";
 import {LocationConfigFile} from "../template/location-configfile";
+import {ProxyConfigFile} from "../template/proxy-configfile";
 import {Builder} from "./base.builder";
 import {LocationBuilder} from "./location-builder";
 import {createLocationRender} from "./location.factory";
@@ -28,15 +29,14 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 		});
 		this.auto(...locations);
 		
-		this.include(HttpConfigFile, GlobalBodyConfigFile);
-		this.include(HttpsConfigFile, GlobalBodyConfigFile);
+		this.include(ProxyConfigFile, GlobalBodyConfigFile);
 		
 		this.include(HttpConfigFile, LocationConfigFile);
 		this.include(HttpsConfigFile, LocationConfigFile);
 	}
 	
 	protected *buildConfigFile(status): IterableIterator<ConfigFile<any>> {
-		yield new GlobalBodyConfigFile({});
+		yield new GlobalBodyConfigFile({Host: this.service.outerDomainName});
 		
 		const server_name = [...this.service.alias, ...status.nameAlias].filter(unique);
 		const direction = directionName(status.direction);

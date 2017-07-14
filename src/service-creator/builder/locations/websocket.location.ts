@@ -19,7 +19,6 @@ export class WebsocketLocation extends LocationBuilder<ISocketLocationConfig> {
 			upstream: {
 				url: `http://${this.upstream.getName(status.direction)}`,
 				stream: true,
-				Host: this.service.outerDomainName,
 			},
 		});
 		

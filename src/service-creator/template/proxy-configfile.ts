@@ -11,7 +11,6 @@ export interface ProxyOption {
 		url: string;
 		stream?: boolean;
 		tryNext?: (number|string)[];
-		Host: string,
 		ignoreClientAbourt?: boolean;
 	};
 	cache?: {
@@ -107,7 +106,7 @@ export class ProxyConfigFile extends ConfigFile<ProxyOption> {
 	protected createPass() {
 		const proxy_pass = new ConfigValuesBundle('proxy-pass');
 		const {
-			url, stream, tryNext, ignoreClientAbourt, Host,
+			url, stream, tryNext, ignoreClientAbourt,
 		} = this.option.upstream;
 		
 		proxy_pass.push(new ConfigValue('proxy_http_version', '1.1'));
@@ -130,7 +129,6 @@ export class ProxyConfigFile extends ConfigFile<ProxyOption> {
 			proxy_pass.push(new ConfigValue('proxy_read_timeout', '12s'));
 			proxy_pass.push(new ConfigValue('proxy_send_timeout', '6s'));
 		}
-		proxy_pass.push(new ConfigValue('proxy_set_header', ['Host', Host]));
 		const n = tryNext || ['error', 'timeout', 500, 502, 'non_idempotent'];
 		const tn = [];
 		for (let v of n) {

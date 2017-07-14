@@ -9,7 +9,7 @@ function logContent(type: AccessLog) {
 	case AccessLog.tiny:
 		return s(`$http_x_proxy_path $request_method $host$request_uri $status <- $upstream_addr`);
 	case AccessLog.cache:
-		return s(`$http_x_proxy_path $request_method $host$request_uri $status. CACHE: $upstream_cache_status, FROM: $upstream_addr, SIZE: $body_bytes_sent`);
+		return s(`$http_x_proxy_path $request_method $host$request_uri $status. CACHE: $upstream_cache_status <-$body_bytes_sent- $upstream_addr`);
 	case AccessLog.robot:
 		return s(`[$time_local] "$request" FROM "$http_referer" Status: $status
 	"$http_user_agent"`);
@@ -20,7 +20,6 @@ export enum AccessLog {
 	none = 0,
 	main,
 	tiny,
-	tiny_proxy,
 	cache,
 	robot,
 }

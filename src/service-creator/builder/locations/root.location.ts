@@ -19,7 +19,6 @@ export class RootLocation extends LocationBuilder<IRootLocationConfig> {
 			upstream: {
 				url: `http://${this.upstream.getName(status.direction)}`,
 				stream: false,
-				Host: this.service.outerDomainName,
 			},
 		});
 		
@@ -28,7 +27,7 @@ export class RootLocation extends LocationBuilder<IRootLocationConfig> {
 			location: location.location,
 			log: {
 				access: AccessLog.tiny,
-				error: 'info',
+				error: 'warn',
 			},
 		})
 	}

@@ -19,7 +19,7 @@ export class WellknownLocation extends LocationBuilder<IWellknownLocationConfig>
 			id: 'well-known',
 			log: {
 				access: AccessLog.main,
-				error: 'info',
+				error: 'warn',
 			},
 		});
 	}

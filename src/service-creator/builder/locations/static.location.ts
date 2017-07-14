@@ -34,7 +34,6 @@ export class StaticLocation extends LocationBuilder<IStaticLocationConfig> {
 			upstream: {
 				url: `http://${this.upstream.getName(status.direction)}`,
 				stream: false,
-				Host: this.service.outerDomainName,
 			},
 		});
 		
@@ -42,9 +41,9 @@ export class StaticLocation extends LocationBuilder<IStaticLocationConfig> {
 			location: location.location,
 			id: this.id,
 			log: {
-				access: AccessLog.tiny,
+				access: AccessLog.cache,
 				condition: '$log_abnormal',
-				error: 'info',
+				error: 'warn',
 			},
 		});
 	}

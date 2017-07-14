@@ -12,7 +12,12 @@ export interface HeaderPassingOption {
 	setProxyHeaders?: {[key: string]: string};
 	setReturnHeaders?: string[];
 }
-export class GlobalBodyConfigFile extends ConfigFile<{}> {
+
+function escapeRegExp(str) {
+	return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+export class GlobalBodyConfigFile extends ConfigFile<{Host: string;}> {
 	protected debugInspect(): string {
 		return `globalBody`;
 	}
@@ -29,17 +34,32 @@ export class GlobalBodyConfigFile extends ConfigFile<{}> {
 		const ret = new ConfigValuesBundle('global-body');
 		
 		ret.push(new ConfigValue('proxy_pass_request_headers', 'on'));
-		ret.push(new ConfigValue('more_set_headers', `X-Proxy-Path: \${http_x_proxy_path}${whoAmI.id}`).wrap());
-		ret.push(new ConfigValue('more_set_headers', `X-GWService: ${this.serviceName}`).wrap());
 		ret.push(new ConfigValue('proxy_set_header', ['X-Proxy-Path', `"\${http_x_proxy_path}${whoAmI.id}->"`]));
+		//language=TEXT
 		ret.push(`
-if ( $http_x_proxy_path ~ /->gw\.aliyun\-elastic($|->)/ ) {
-	# 508 Loop Detected (WebDAV)
-	return 508 $http_x_proxy_path;
-}`);
+header_filter_by_lua_block {
+	if not ngx.header["X-Proxy-Path"] then
+		local reqRoutePath = ngx.req.get_headers()["X-Proxy-Path"];
+		if reqRoutePath then
+			ngx.header["X-Proxy-Path"] = reqRoutePath .. "${whoAmI.id}"
+		else
+			ngx.header["X-Proxy-Path"] = "${whoAmI.id}"
+		end
+	end
+}
+access_by_lua_block {
+	local reqRoutePath = ngx.req.get_headers()["X-Proxy-Path"];
+	if reqRoutePath and string.find(reqRoutePath, "${whoAmI.id}") then
+		ngx.say("<h1>Server Error: Loop Detected</h1><p>" .. reqRoutePath .. "</p>")
+		ngx.exit(ngx.HTTP_SERVICE_UNAVAILABLE)
+	end
+}
+`);
 		
 		ret.push(new ConfigValue('proxy_set_header', ['X-Https', '"$https$http_x_https"']));
 		ret.push(new ConfigValue('proxy_set_header', ['X-Http2', '"$http2$http_x_http2"']));
+		
+		ret.push(new ConfigValue('proxy_set_header', ['Host', this.option.Host]));
 		
 		return ret;
 	}
