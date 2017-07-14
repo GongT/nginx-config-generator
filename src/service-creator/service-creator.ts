@@ -90,10 +90,10 @@ export class ServiceCreator {
 		config.alias.unshift(config.outerDomainName, serviceName);
 		
 		if (machines.length === 0) {
-			throw new TypeError(`no machine in service "${serviceName}"`);
+			debug_notice(`no machine in service "${serviceName}"`);
 		}
 		if (interfaceMachine.length === 0) {
-			throw new TypeError(`no machine in service "${serviceName}"`);
+			throw new TypeError(`no interface machine in service "${serviceName}"`);
 		}
 		
 		config.isGateway = isGatewayOfService(config);
