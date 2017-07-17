@@ -15,6 +15,7 @@ export interface LocationOption {
 	};
 	index?: boolean;
 	root?: string;
+	alias?: string;
 	content?: string|ConfigValuesBundle;
 }
 
@@ -37,12 +38,14 @@ export class LocationConfigFile extends ConfigFile<LocationOption> {
 		if (this.option.content) {
 			config.push(this.option.content);
 		}
+		if (this.option.alias) {
+			config.push(new ConfigValue('alias', this.option.alias));
+		}
 		if (this.option.root) {
 			config.push(new ConfigValue('root', this.option.root));
-			
-			if (this.option.index) {
-				config.push(new ConfigValue('autoindex', 'on'));
-			}
+		}
+		if (this.option.index) {
+			config.push(new ConfigValue('autoindex', 'on'));
 		}
 		
 		const accessLog = [
