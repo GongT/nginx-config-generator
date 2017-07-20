@@ -6,6 +6,8 @@ const debug_normal = createLogger(LEVEL.INFO, 'handle');
 const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
 const debug_nginx_error = createLogger(LEVEL.ERROR, 'nginx');
 
+const NGINX_DOCKER_NAME = 'nginx';
+
 function timeout(ms: number): Promise<void> {
 	return <any>new Promise((resolve, reject) => {
 		setTimeout(() => {
@@ -20,7 +22,7 @@ export async function reloadNginxConfig() {
 	
 	debug_normal('try to restart nginx...');
 	
-	let ret = await docker_exec(docker, 'nginx', ['nginx', '-t']).catch(logThrow);
+	let ret = await docker_exec(docker, NGINX_DOCKER_NAME, ['nginx', '-t']).catch(logThrow);
 	if (ret[0] !== 0) {
 		debug_nginx_error('>>> nginx config has error.');
 		throw new Error('nginx config error');
@@ -33,7 +35,7 @@ export async function reloadNginxConfig() {
 		return;
 	}
 	
-	ret = await docker_exec(docker, 'nginx', ['nginx', '-s', 'reload']).catch(logThrow);
+	ret = await docker_exec(docker, NGINX_DOCKER_NAME, ['nginx', '-s', 'reload']).catch(logThrow);
 	
 	if (ret[0] === 0) {
 		debug_normal('>>> nginx reload success.');
