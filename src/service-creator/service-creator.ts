@@ -197,9 +197,12 @@ export class ServiceCreator {
 			return;
 		}
 		debug_normal('create service file for "%s"', this.serviceName);
+		debug_normal('  localRunning: %s', this.status.localRunning? 'yes' : 'no');
+		debug_normal('  dockerHost: %s', this.status.dockerHost);
+		debug_normal('  nameAlias: %s', this.status.nameAlias.join(', '));
 		const configFiles: ConfigFile<any>[] = [];
 		if (this.http) {
-			debug_normal('  http:');
+			debug_normal('->http:');
 			for (let file of this.http.configFiles(this.status)) {
 				debug_normal('    %s', file.inspect());
 				configFiles.push(file);
@@ -207,7 +210,7 @@ export class ServiceCreator {
 		}
 		
 		if (this.stream) {
-			debug_normal('  stream:');
+			debug_normal('->stream:');
 			for (let file of this.stream.configFiles(this.status)) {
 				configFiles.push(file);
 			}

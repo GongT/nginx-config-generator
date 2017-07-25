@@ -20,6 +20,7 @@ export interface IUpstreamTemplateVar {
 	hashKey: string;
 	keepalive?: number;
 	protocol: string;
+	comment?: string;
 }
 
 export class UpstreamConfig extends ConfigFile<IUpstreamTemplateVar> {
@@ -52,6 +53,10 @@ export class UpstreamConfig extends ConfigFile<IUpstreamTemplateVar> {
 	
 	buildContent() {
 		const config = new ConfigSection('upstream ' + this.option.name);
+		
+		for (const line of this.option.comment.split('\n')) {
+			config.push('# ' + line);
+		}
 		
 		if (this.option.hashKey) {
 			config.set(new ConfigValue('hash', this.option.hashKey));

@@ -133,7 +133,7 @@ export class ConfigSection extends ConfigValue implements Merge {
 	
 	push(item: string|ConfigValue|ConfigValuesBundle) {
 		if (typeof item === 'string') {
-			this.extraContent += item;
+			this.extraContent += '\n' + item;
 		} else {
 			this.content.push(item);
 		}

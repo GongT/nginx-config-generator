@@ -17,6 +17,7 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 	protected port: number;
 	protected keepalive: number;
 	protected isStream: boolean;
+	private comment: string;
 	
 	init(config: IUpstreamConfig) {
 		this.gateways = config.interfaceMachine.filter(isNotMe);
@@ -33,33 +34,56 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 			this.keepalive = config.keepalive || 16;
 		}
 		this.port = config.port || 80;
+		this.comment = `UpstreamConfig:
+	keepalive=${this.keepalive}
+	port=${this.port}
+	isStream=${this.isStream? 'yes' : 'no'}
+`;
 	}
 	
-	private buildRouteIn(servers: UpstreamServers) { // route from outside to xxx
+	private buildRouteIn(servers: UpstreamServers, backup: boolean) { // route from outside to xxx
 		if (isGatewayServer()) {
 			for (let server of this.upstreams) {
-				servers[server] = {port: this.port, weight: 50};
+				servers[server] = {port: this.port, weight: 50, backup: backup};
+			}
+			if (this.upstreams.length) {
+				return `IN: upstream servers: ${this.upstreams.join(', ')}\n`;
+			} else {
+				return `IN: no upstream\n`;
 			}
 		}
 	}
 	
-	private buildRouteOut(servers: UpstreamServers) { // route from outside to xxx
+	private buildRouteOut(servers: UpstreamServers, backup: boolean) { // route from outside to xxx
 		if (isGatewayServer()) {
 			for (let server of this.upstreams) {
-				servers[server] = {port: this.port, weight: 50};
+				servers[server] = {port: this.port, weight: 50, backup: backup};
+			}
+			if (this.upstreams.length) {
+				return `OUT: upstream servers: ${this.upstreams.join(', ')}\n`;
+			} else {
+				return `OUT: no upstream\n`;
 			}
 		} else {
 			for (let server of this.gateways) {
 				servers[server] = {port: this.port, weight: 10};
+			}
+			
+			if (this.gateways.length) {
+				return `OUT: gateway servers: ${this.gateways.join(', ')}\n`;
+			} else {
+				return `OUT: no more gateway\n`;
 			}
 		}
 	}
 	
 	private buildNotExists(servers: UpstreamServers) {
 		servers['127.0.0.1'] = {port: 18281, weight: 1};
+		return 'no upstream exists, add 18281 fatal error.\n';
 	}
 	
 	protected *buildConfigFile(status) {
+		let comment = this.comment;
 		const direction = status.direction;
 		const route: UpstreamServers = {}; // route from inside to outside
 		if (status.localRunning) {
@@ -67,13 +91,13 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 		}
 		
 		if (direction === RouteDirection.IN) {
-			this.buildRouteIn(route);
+			comment += this.buildRouteIn(route, status.localRunning);
 		} else {
-			this.buildRouteOut(route);
+			comment += this.buildRouteOut(route, status.localRunning);
 		}
 		
 		if (Object.keys(route).length === 0) {
-			this.buildNotExists(route);
+			comment += this.buildNotExists(route);
 		}
 		
 		// const n = this.isStream? `${this.service.serviceName}-` : '';
@@ -81,6 +105,7 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 		const name: string = this.getName(direction);
 		
 		yield new UpstreamConfig({
+			comment,
 			name: name,
 			servers: route,
 			id: directionName(direction) + p,
