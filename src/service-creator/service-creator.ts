@@ -93,7 +93,7 @@ export class ServiceCreator {
 			debug_notice(`no machine in service "${serviceName}"`);
 		}
 		if (interfaceMachine.length === 0) {
-			throw new TypeError(`no interface machine in service "${serviceName}"`);
+			debug_notice(`no interface machine in service "${serviceName}"`);
 		}
 		
 		config.isGateway = isGatewayOfService(config);
