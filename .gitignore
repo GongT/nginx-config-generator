@@ -15,6 +15,7 @@ package-lock.json
 !.*ignore
 !.gitinclude
 dist/
+!.babelrc
 src/config.ts
 ### <<< END MICRO-BUILD SECTION
 

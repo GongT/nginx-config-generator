@@ -66,7 +66,7 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 			}
 		} else {
 			for (let server of this.gateways) {
-				servers[server] = {port: this.port, weight: 10};
+				servers[server] = {port: this.port, weight: 10, backup: backup};
 			}
 			
 			if (this.gateways.length) {
@@ -82,7 +82,7 @@ export class UpstreamBuilder extends Builder<IUpstreamConfig> {
 		return 'no upstream exists, add 18281 fatal error.\n';
 	}
 	
-	protected *buildConfigFile(status) {
+	protected * buildConfigFile(status) {
 		let comment = this.comment;
 		const direction = status.direction;
 		const route: UpstreamServers = {}; // route from inside to outside
