@@ -6,6 +6,7 @@ import {UpstreamBuilder} from "./upstream-builder";
 export interface IStreamServerOpt {
 	servers: IStreamServerConfig[];
 }
+
 export class StreamServerBuilder extends Builder<IStreamServerOpt> {
 	private servers: {
 		upstream: UpstreamBuilder;
@@ -24,11 +25,12 @@ export class StreamServerBuilder extends Builder<IStreamServerOpt> {
 		});
 	}
 	
-	protected *buildConfigFile(status): any {
+	protected * buildConfigFile(status): any {
 		for (let {upstream, server} of this.servers) {
 			yield new StreamServerConfig({
 				upstream: upstream.getName(status.direction),
 				name: server.name,
+				protocol: server.protocol,
 				port: status.direction === RouteDirection.IN? server.port + 1 : server.port,
 			});
 			yield* upstream.configFiles(status);
