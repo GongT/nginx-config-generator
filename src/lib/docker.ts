@@ -67,26 +67,32 @@ if (debugEnable) {
 emitter.on("connect", function () {
 	debug("connected to docker api");
 	if (process.env.RUN_IN_DOCKER) {
-		runner.delay(WAIT_TIME, 'connect').catch();
+		runner.delay(WAIT_TIME, 'connect').catch(hintError);
 	} else {
-		runner.run('connect').catch();
+		runner.run('connect').catch(hintError);
 	}
 });
 emitter.on("start", function (message) {
 	debug("container started: %j", message);
-	runner.delay(WAIT_TIME, "container started", message.id).catch();
+	runner.delay(WAIT_TIME, "container started", message.id).catch(hintError);
 });
 emitter.on("die", function (message) {
 	debug("container stopped: %j", message);
-	runner.delay(WAIT_TIME, "container stopped", message.id).catch();
+	runner.delay(WAIT_TIME, "container stopped", message.id).catch(hintError);
 });
 
+function hintError(e) {
+	console.error('catch promise reject: %s', e? e.stack : 'no more info');
+}
+
 let WAIT_TIME: number = 1000;
+
 export function connectDocker(wait: number = 1000) {
 	WAIT_TIME = wait;
 	debug("connecting to docker api");
 	emitter.start();
 }
+
 export function disconnectDocker() {
 	debug("disconnect from docker api");
 	emitter.stop();
@@ -115,6 +121,7 @@ async function scheduleGenerate(why: string, target?: string) {
 }
 
 let cache = {};
+
 async function realDo(normal: boolean = true) {
 	gen_log('generator started.');
 	const containers = await docker_list_containers(docker);
@@ -146,6 +153,7 @@ function re_cache(list: DockerInspect[]) {
 		cache[insp.Id] = true;
 	});
 }
+
 function cache_equal(list: DockerInspect[]) {
 	if (Object.keys(cache).length !== list.length) {
 		return false;
@@ -161,6 +169,7 @@ export function handleChange(cb: Callback) {
 }
 
 type Timeout = Promise<void>&{kill(): void};
+
 function timeout(ms: number): Timeout {
 	let to = null;
 	const p = <any>new Promise((resolve, reject) => {
