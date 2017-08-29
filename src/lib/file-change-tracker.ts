@@ -1,4 +1,6 @@
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
+import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
+
 import {createHash} from "crypto";
 import {readFileSync, writeFileSync} from "fs";
 import {ensureDirSync, pathExistsSync} from "fs-extra";

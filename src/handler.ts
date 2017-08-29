@@ -1,5 +1,7 @@
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
+import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
+
 import "@gongt/jenv-data/global";
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
 import {lstatSync, readdirSync, rmdirSync, unlinkSync} from "fs";
 import {resolve} from "path";
 import {ReadLine} from "readline";

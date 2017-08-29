@@ -1,5 +1,6 @@
 import {JsonEnv} from "@gongt/jenv-data";
-import {createLogger, LEVEL} from "@gongt/ts-stl-server/debug";
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
+import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {pathExistsSync} from "fs-extra";
 import {resolve} from "path";
 import {inspect} from "util";
