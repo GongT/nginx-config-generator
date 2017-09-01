@@ -1,10 +1,8 @@
-import {createLogger} from "@gongt/ts-stl-library/log/debug";
-import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
-
 import "@gongt/jenv-data/global";
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {lstatSync, readdirSync, rmdirSync, unlinkSync} from "fs";
 import {resolve} from "path";
-import {ReadLine} from "readline";
 import {debugPath, SERVICE_SAVE_FOLDER} from "./init/folders";
 import {defaultServer, globalFile, mainServiceLoader, serviceMapper, streamServiceLoader} from "./init/services";
 import {connectDocker, handleChange, initComplete} from "./lib/docker";
@@ -12,9 +10,9 @@ import {FileTracker} from "./lib/file-change-tracker";
 import {reloadNginxConfig} from "./lib/restart-nginx";
 import {getServiceName} from "./lib/service-name";
 
-const debug_silly = createLogger(LEVEL.SILLY, 'handle');
-const debug_normal = createLogger(LEVEL.INFO, 'handle');
-const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
+const debug_silly = createLogger(LOG_LEVEL.SILLY, 'handle');
+const debug_normal = createLogger(LOG_LEVEL.INFO, 'handle');
+const debug_notice = createLogger(LOG_LEVEL.NOTICE, 'handle');
 
 function getNameDockerMap(list: DockerInspect[]): {[id: string]: DockerInspect} {
 	const ret = {};
@@ -26,6 +24,7 @@ function getNameDockerMap(list: DockerInspect[]): {[id: string]: DockerInspect} 
 	});
 	return ret;
 }
+
 connectDocker(2000); // wait 2s every action
 
 handleChange(async (list: DockerInspect[]) => {
@@ -86,7 +85,7 @@ function removeUnusedFiles(root: string, fileTracker: FileTracker): boolean {
 					allDeleted = true;
 				}
 			} else {
-				debug_normal('removing old unknown file: %s', fileDebug);
+				debug_silly('removing old unknown file: %s', fileDebug);
 				try {
 					unlinkSync(absPath);
 				} catch (e) {

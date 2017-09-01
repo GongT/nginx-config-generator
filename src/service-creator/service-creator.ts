@@ -1,6 +1,6 @@
 import {JsonEnv} from "@gongt/jenv-data";
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
-import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {pathExistsSync} from "fs-extra";
 import {resolve} from "path";
 import {inspect} from "util";
@@ -14,15 +14,13 @@ import {StreamServerBuilder} from "./builder/stream-server-builder";
 import {IServiceConfig, IServiceStatus} from "./config.define";
 import {ServiceLoaderBuilder} from "./global.service";
 import {ConfigFile} from "./template/base.configfile";
-import IServersConfig = JsonEnvConfigModule.IServersConfig;
-import I1883Config = JsonEnvConfigModule.I1883Config;
 import extend = require('extend');
 
-const debug_config = createLogger(LEVEL.INFO, 'config');
+const debug_config = createLogger(LOG_LEVEL.INFO, 'config');
 
-const debug_sill = createLogger(LEVEL.SILLY, 'generate');
-const debug_normal = createLogger(LEVEL.INFO, 'generate');
-const debug_notice = createLogger(LEVEL.NOTICE, 'generate');
+const debug_sill = createLogger(LOG_LEVEL.SILLY, 'generate');
+const debug_normal = createLogger(LOG_LEVEL.INFO, 'generate');
+const debug_notice = createLogger(LOG_LEVEL.NOTICE, 'generate');
 
 export class ServiceCreator {
 	protected serviceConfig: IServiceConfig;

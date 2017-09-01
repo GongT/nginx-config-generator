@@ -1,9 +1,8 @@
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
-import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
-
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {EventEmitter} from "events";
 
-const debug = createLogger(LEVEL.SILLY, 'timer');
+const debug = createLogger(LOG_LEVEL.SILLY, 'timer');
 
 export class CallbackRunner extends EventEmitter {
 	protected running: boolean = false;
@@ -27,13 +26,17 @@ export class CallbackRunner extends EventEmitter {
 		this.emit(this.EVENTS.START);
 		const promise = this.callback(...args);
 		this.promise = promise.catch((e) => {
-			debug('callback error');
+			debug('callback end with error: ', e.stack);
 			this.emit(this.EVENTS.ERROR, e);
 		}).then(() => {
 			this.promise = this.queuePromise = null;
 			debug('callback finished');
 			this.running = false;
-			this.emit(this.EVENTS.END);
+			try {
+				this.emit(this.EVENTS.END);
+			} catch (e) {
+				console.error(e);
+			}
 		});
 		return promise;
 	}
@@ -78,8 +81,9 @@ export class CallbackRunner extends EventEmitter {
 		return this.queuePromise;
 	}
 }
+
 function timeout(ms: number): Promise<void> {
-	return <any>new Promise((resolve, reject) => {
+	return <any>new Promise((resolve) => {
 		setTimeout(() => {
 			resolve();
 		}, ms);

@@ -1,12 +1,11 @@
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
-import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
-
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {docker} from "./docker";
 import {docker_exec} from "./docker-exec";
 
-const debug_normal = createLogger(LEVEL.INFO, 'handle');
-const debug_notice = createLogger(LEVEL.NOTICE, 'handle');
-const debug_nginx_error = createLogger(LEVEL.ERROR, 'nginx');
+const debug_normal = createLogger(LOG_LEVEL.INFO, 'handle');
+const debug_notice = createLogger(LOG_LEVEL.NOTICE, 'handle');
+const debug_nginx_error = createLogger(LOG_LEVEL.ERROR, 'nginx');
 
 const NGINX_DOCKER_NAME = 'nginx';
 

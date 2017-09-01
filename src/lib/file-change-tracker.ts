@@ -1,16 +1,15 @@
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
-import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
-
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {createHash} from "crypto";
 import {readFileSync, writeFileSync} from "fs";
 import {ensureDirSync, pathExistsSync} from "fs-extra";
 import {dirname, resolve} from "path";
 import {CONFIGFILE_PATH, debugPath} from "../init/folders";
 
-const info = createLogger(LEVEL.INFO, 'file');
-const debug = createLogger(LEVEL.DEBUG, 'file');
-const notice = createLogger(LEVEL.NOTICE, 'file');
-const silly = createLogger(LEVEL.SILLY, 'file');
+const info = createLogger(LOG_LEVEL.INFO, 'file');
+const debug = createLogger(LOG_LEVEL.DEBUG, 'file');
+const notice = createLogger(LOG_LEVEL.NOTICE, 'file');
+const silly = createLogger(LOG_LEVEL.SILLY, 'file');
 
 function md5(content: string) {
 	return createHash('md5').update(content).digest('hex');

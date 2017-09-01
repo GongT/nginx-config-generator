@@ -1,7 +1,7 @@
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
-import {LOG_LEVEL as LEVEL} from "@gongt/ts-stl-library/log/levels";
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 
-const debug = createLogger(LEVEL.INFO, 'list');
+const debug = createLogger(LOG_LEVEL.INFO, 'list');
 
 export interface DockerListItem {
 	Id: string;
