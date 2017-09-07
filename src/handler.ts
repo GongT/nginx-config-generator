@@ -88,7 +88,7 @@ function removeUnusedFiles(root: string, fileTracker: FileTracker): boolean {
 						debug_notice('  remove folder error: %s', debugPath(e.message));
 					}
 				} else {
-					allDeleted = true;
+					allDeleted = false;
 				}
 			} else {
 				debug_silly('removing old unknown file: %s', fileDebug);

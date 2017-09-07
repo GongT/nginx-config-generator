@@ -6,86 +6,120 @@ const debug = createLogger(LOG_LEVEL.SILLY, 'timer');
 
 export class CallbackRunner extends EventEmitter {
 	protected running: boolean = false;
-	protected promise: Promise<void> = null;
-	protected queuePromise: Promise<void> = null;
-	protected lastArgs: any[];
+	protected scheduled: number = 0;
+	protected queued: boolean = false;
+	protected lock: Promise<void>;
+	protected delayTime: number = 0;
 	
 	public readonly EVENTS = {
+		SCHEDULE: Symbol('schedule'),
+		QUEUE: Symbol('queue'),
 		START: Symbol('start'),
 		END: Symbol('end'),
+		IDLE: Symbol('idle'),
 		ERROR: Symbol('error'),
 	};
 	
 	constructor(protected callback: (...args: any[]) => Promise<void>) {
 		super();
+		this.on(this.EVENTS.SCHEDULE, (next) => {
+			debug('schedule now: %s', next);
+			this.queued = false;
+			this.scheduled = next;
+		});
+		this.on(this.EVENTS.QUEUE, () => {
+			debug('queued schedule');
+			this.queued = true;
+		});
+		this.on(this.EVENTS.START, () => {
+			debug('start callback');
+			this.scheduled = 0;
+			this.running = true;
+		});
+		this.on(this.EVENTS.END, () => {
+			debug('callback finished');
+			this.running = false;
+		});
+		this.on(this.EVENTS.ERROR, (e) => {
+			debug('callback error: %s', e.stack);
+		});
+	}
+	
+	private schedule(delay: number, args: any[]) {
+		if (this.running) {
+			if (this.queued) {
+				debug('queued already schedule');
+				return;
+			}
+			this.emit(this.EVENTS.QUEUE);
+			this.once(this.EVENTS.END, () => {
+				debug('queued schedule starting');
+				return this.schedule(delay, args);
+			});
+		} else {
+			const next = Date.now() + delay;
+			this.emit(this.EVENTS.SCHEDULE, next);
+			return timeout(delay).then(() => {
+				if (this.scheduled !== next) {
+					debug('  canceled schedule');
+					return;
+				}
+				
+				return this.start(args);
+			});
+		}
 	}
 	
 	private start(args: any[]) {
-		debug('start');
-		this.running = true;
+		if (this.lock) {
+			return this.lock.then(() => {
+				return this.start(args);
+			});
+		}
 		this.emit(this.EVENTS.START);
-		const promise = this.callback(...args);
-		this.promise = promise.catch((e) => {
-			debug('callback end with error: ', e.stack);
+		return this.callback(...args).catch((e) => {
 			this.emit(this.EVENTS.ERROR, e);
 		}).then(() => {
-			this.promise = this.queuePromise = null;
-			debug('callback finished');
-			this.running = false;
-			try {
-				this.emit(this.EVENTS.END);
-			} catch (e) {
-				console.error(e);
+			this.emit(this.EVENTS.END);
+			if (!this.queued) {
+				this.emit(this.EVENTS.IDLE);
 			}
 		});
-		return promise;
 	}
 	
-	run(...args: any[]): Promise<void> {
-		this.lastArgs = args;
-		if (this.queuePromise) {
-			return this.queuePromise;
-		}
-		if (this.running) {
-			debug('callback queued');
-			this.queuePromise = this.promise.then(() => {
-				return this.start(this.lastArgs);
+	manual(...args: any[]) {
+		return this.lock = new Promise((resolve, reject) => {
+			const p = this.callback(...args);
+			p.catch().then(() => {
+				this.lock = null;
 			});
-			return this.queuePromise;
-		}
-		
-		debug('run now');
-		return this.start(args);
-	}
-	
-	delay(ms: number, ...args: any[]) {
-		this.lastArgs = args;
-		if (this.queuePromise) {
-			return this.queuePromise;
-		}
-		let p: Promise<void>;
-		if (this.running) {
-			debug('callback queued');
-			p = this.promise.then(() => {
-				return timeout(ms);
-			});
-		} else {
-			p = timeout(ms);
-		}
-		
-		this.queuePromise = p.then(() => {
-			return this.start(this.lastArgs);
+			p.then(resolve, reject);
 		});
-		
-		debug('run delay (%s)', ms);
-		return this.queuePromise;
+	}
+	
+	run(...args: any[]) {
+		this.schedule(this.delayTime, args);
+		this.delayTime = 0;
+	}
+	
+	delay(ms: number) {
+		this.delayTime = ms;
+		return this;
 	}
 }
 
 function timeout(ms: number): Promise<void> {
-	return <any>new Promise((resolve) => {
-		setTimeout(() => {
-			resolve();
-		}, ms);
-	});
+	if (ms) {
+		return <any>new Promise((resolve) => {
+			setTimeout(() => {
+				resolve();
+			}, ms);
+		});
+	} else {
+		return <any>new Promise((resolve) => {
+			setImmediate(() => {
+				resolve();
+			});
+		});
+	}
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 if [ -z "${RUN_IN_DOCKER}" ]; then
 	echo "failed: not running in docker." >&2
