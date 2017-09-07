@@ -192,7 +192,7 @@ export class ServiceCreator {
 			for (let file of this.files) {
 				file.touchFile(fileTracker);
 			}
-			debug_normal('unchanged service: "%s"', this.serviceName);
+			debug_sill('unchanged service: "%s"', this.serviceName);
 			return;
 		}
 		debug_normal('create service file for "%s"', this.serviceName);

@@ -31,7 +31,6 @@ handleChange(async (list: DockerInspect[]) => {
 	debug_normal('docker status changed!');
 	const runningDocker = getNameDockerMap(list);
 	
-	let changed = false;
 	const fileTracker: FileTracker = new FileTracker;
 	
 	for (const creator of serviceMapper.values()) {
@@ -53,8 +52,14 @@ handleChange(async (list: DockerInspect[]) => {
 	
 	removeUnusedFiles(SERVICE_SAVE_FOLDER, fileTracker);
 	
+	const changed = fileTracker.hasSomeChange();
+	if (changed) {
+		debug_normal('file has change, will reload nginx.');
+	} else if (initComplete) {
+		debug_normal('first loop, force reload nginx.');
+	}
 	// if not inited, force load
-	if (fileTracker.hasSomeChange() || !initComplete) {
+	if (changed || !initComplete) {
 		await reloadNginxConfig();
 	}
 });
@@ -82,6 +87,7 @@ function removeUnusedFiles(root: string, fileTracker: FileTracker): boolean {
 					} catch (e) {
 						debug_notice('  remove folder error: %s', debugPath(e.message));
 					}
+				} else {
 					allDeleted = true;
 				}
 			} else {

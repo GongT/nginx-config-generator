@@ -11,6 +11,7 @@ const Dockerode = require("dockerode");
 const DockerEvents = require("docker-events");
 
 const debug = createLogger(LOG_LEVEL.INFO, 'docker');
+const debug_data = createLogger(LOG_LEVEL.DATA, 'docker');
 const gen_log = createLogger(LOG_LEVEL.INFO, 'gen');
 const cb_error = createLogger(LOG_LEVEL.ERROR, 'callback');
 const debug_start = createLogger(LOG_LEVEL.NOTICE, 'start');
@@ -79,11 +80,13 @@ emitter.on("connect", function () {
 	}
 });
 emitter.on("start", function (message) {
-	debug("container started: %j", message);
+	debug("container started: %s", message.id);
+	debug_data(message);
 	runner.delay(WAIT_TIME, "container started", message.id, true).catch(hintError);
 });
 emitter.on("die", function (message) {
-	debug("container stopped: %j", message);
+	debug("container stopped: %s", message.id);
+	debug_data(message);
 	runner.delay(WAIT_TIME, "container stopped", message.id, false).catch(hintError);
 });
 

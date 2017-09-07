@@ -38,7 +38,7 @@ export class FileTracker {
 			}
 			
 			if (this.contentCompare[absPath] === hash) {
-				info('%s - not write - same content', fileDebug);
+				silly('%s - not write - same content', fileDebug);
 				return;
 			}
 			
