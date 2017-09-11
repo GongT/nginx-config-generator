@@ -17,6 +17,7 @@ function md5(content: string) {
 
 export class FileTracker {
 	protected knownFiles: string [] = [];
+	protected change = false;
 	protected contentCompare: any = {};
 	
 	writeFile(absPath: string, content: string) {
@@ -47,11 +48,12 @@ export class FileTracker {
 			info('write file: %s = %s', fileDebug, hash);
 			ensureDirSync(dirname(absPath));
 			writeFileSync(absPath, content, {encoding: 'utf8'});
+			this.change = true;
 		}
 	}
 	
 	hasSomeChange() {
-		return this.knownFiles.length > 0;
+		return this.change;
 	}
 	
 	know(absPath: string) {

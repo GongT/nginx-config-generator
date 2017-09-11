@@ -40,6 +40,8 @@ handleChange(async (list: DockerInspect[]) => {
 		} else {
 			creator.noDocker();
 		}
+		
+		debug_normal('create template for: %s', creator.serviceName);
 		creator.createTemplate(fileTracker);
 	}
 	
