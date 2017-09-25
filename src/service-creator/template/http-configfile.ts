@@ -36,6 +36,7 @@ export abstract class HttpServerConfigFile<T> extends ConfigFile<T&HttpTemplateO
 		httpConfig.push(ConfigValuesBundle.fromArray('listen', this.listen));
 		httpConfig.push(new ConfigValue('server_name', this.option.server_name));
 		httpConfig.push(new ConfigValue('default_type', 'text/html'));
+		// httpConfig.push(new ConfigValue('more_set_headers', 'Strict-Transport-Security: max-age=31536000; includeSubDomains',));
 		
 		return httpConfig;
 	}
@@ -76,7 +77,7 @@ export class FakeHttpsConfigFile extends HttpServerConfigFile<{}> {
 	}
 }
 
-export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string, allowInsecure: Boolean}> {
+export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string}> {
 	private sslConfig: ConfigValuesBundle;
 	
 	get type() {
@@ -103,16 +104,13 @@ export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string, all
 	
 	get listen() {
 		const arr = ['443 ssl http2', '[::]:443 ssl http2'];
-		if (this.option.allowInsecure) {
-			return super.listen.concat(arr);
-		} else {
-			return arr;
-		}
+		return super.listen.concat(arr);
 	}
 	
 	buildContent() {
 		const config = super.buildContent();
 		
+		config.push(new ConfigValue('more_set_headers', 'Strict-Transport-Security: max-age=31536000; includeSubDomains',));
 		config.push(this.sslConfig);
 		
 		return config;

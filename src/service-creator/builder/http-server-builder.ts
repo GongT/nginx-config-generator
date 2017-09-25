@@ -56,7 +56,6 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 					server_name: server_name,
 					Host: this.service.outerDomainName,
 					certPath: this.service.SSLPath,
-					allowInsecure: true,
 				});
 			} else {
 				yield new FakeHttpsConfigFile({
