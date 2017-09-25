@@ -64,6 +64,12 @@ export class MainConfig extends ConfigFile<{}> {
 			'': 'close',
 			'default': 'upgrade',
 		}));
+		config.push(mapper('redirect_https', 'http_upgrade_insecure_requests', {
+			'': '0',
+			'default': '1',
+		}));
+		
+		
 		
 		for (let level of [AccessLog.main, AccessLog.tiny, AccessLog.cache, AccessLog.robot]) {
 			config.push(new ConfigValue('log_format', [accessLogName(level), logContent(level)]));

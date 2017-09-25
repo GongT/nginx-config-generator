@@ -1,5 +1,5 @@
 import {ConfigFile, KnownStore} from "./base.configfile";
-import {ConfigValue, ConfigValuesBundle} from "./nginx-config-structure";
+import {ConfigSection, ConfigValue, ConfigValuesBundle} from "./nginx-config-structure";
 
 // proxy_buffer_size 8k
 // proxy_buffers 32 8k
@@ -160,5 +160,31 @@ export class ProxyConfigFile extends ConfigFile<ProxyOption> {
 			proxy.push(new ConfigValue('break', ''));
 		}
 		return proxy;
+	}
+}
+
+export class ForceJumpConfigFile extends ConfigFile<{}> {
+	protected debugInspect(): string {
+		return 'https redirect';
+	}
+	
+	get fileStore(): KnownStore {
+		return KnownStore.SERVICE;
+	}
+	
+	get fileName(): string {
+		return 'force-https.conf';
+	}
+	
+	buildContent() {
+		const config = new ConfigValuesBundle('force https');
+		
+		const $if = new ConfigSection('if ($redirect_https)');
+		$if.push(new ConfigValue('return', ['302', '"https://$host$uri$is_args$args"']));
+		$if.push(new ConfigValue('break'));
+		
+		config.push($if);
+		
+		return config;
 	}
 }

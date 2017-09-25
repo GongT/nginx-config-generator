@@ -48,6 +48,23 @@ export class HttpConfigFile extends HttpServerConfigFile<{}> {
 	}
 }
 
+export class HttpWithJumpConfigFile extends HttpConfigFile {
+	buildContent() {
+		const config = super.buildContent();
+		
+		const $if = new ConfigSection('if ($redirect_https)');
+		$if.push(new ConfigValue('return', ['302', '"https://$host$uri$is_args$args"']));
+		$if.push(new ConfigValue('break'));
+		
+		const config_sec = new ConfigValuesBundle('force https');
+		config_sec.push($if);
+		
+		config.push(config_sec);
+		
+		return config;
+	}
+}
+
 export class FakeHttpsConfigFile extends HttpServerConfigFile<{}> {
 	private sslConfig: ConfigValuesBundle;
 	
@@ -77,7 +94,12 @@ export class FakeHttpsConfigFile extends HttpServerConfigFile<{}> {
 	}
 }
 
-export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string}> {
+export interface HttpsConfig {
+	certPath: string;
+	withHttp: boolean;
+}
+
+export class HttpsConfigFile extends HttpServerConfigFile<HttpsConfig> {
 	private sslConfig: ConfigValuesBundle;
 	
 	get type() {
@@ -104,7 +126,11 @@ export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string}> {
 	
 	get listen() {
 		const arr = ['443 ssl http2', '[::]:443 ssl http2'];
-		return super.listen.concat(arr);
+		if (this.option.withHttp) {
+			return super.listen.concat(arr);
+		} else {
+			return arr;
+		}
 	}
 	
 	buildContent() {
@@ -112,28 +138,6 @@ export class HttpsConfigFile extends HttpServerConfigFile<{certPath: string}> {
 		
 		config.push(new ConfigValue('more_set_headers', '"Strict-Transport-Security: max-age=31536000; includeSubDomains"',));
 		config.push(this.sslConfig);
-		
-		return config;
-	}
-}
-
-export class HttpJumpConfigFile extends HttpServerConfigFile<{}> {
-	get type() {
-		return 'jump';
-	}
-	
-	buildContent() {
-		const config = super.buildContent();
-		
-		//language=TEXT
-		config.push(`# force redirect
-location / {
-	more_set_headers "Location: https://${this.option.Host}$is_args$args";
-    echo_status 503;
-	echo "<h1>redirecting to https://${this.option.Host}$is_args$args</h1>";
-	break;
-}
-`);
 		
 		return config;
 	}

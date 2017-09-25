@@ -1,7 +1,8 @@
-import {ILocationConfig} from "../../config.define";
+import {unique} from "../../../init/docker-names";
+import {directionName, ILocationConfig} from "../../config.define";
 import {AccessLog} from "../../global.http";
 import {LocationConfigFile} from "../../template/location-configfile";
-import {ProxyConfigFile} from "../../template/proxy-configfile";
+import {ForceJumpConfigFile, ProxyConfigFile} from "../../template/proxy-configfile";
 import {LocationBuilder} from "../location-builder";
 
 export interface IRootLocationConfig extends ILocationConfig {
@@ -10,10 +11,11 @@ export interface IRootLocationConfig extends ILocationConfig {
 export class RootLocation extends LocationBuilder<IRootLocationConfig> {
 	init() {
 		this.createUpstream();
-		this.include(LocationConfigFile, ProxyConfigFile)
+		this.include(LocationConfigFile, ForceJumpConfigFile);
+		this.include(LocationConfigFile, ProxyConfigFile);
 	}
 	
-	protected *buildLocationFile(status, location): any {
+	protected * buildLocationFile(status, location): any {
 		yield new ProxyConfigFile({
 			id: 'root',
 			upstream: {
@@ -29,6 +31,6 @@ export class RootLocation extends LocationBuilder<IRootLocationConfig> {
 				access: AccessLog.tiny,
 				error: 'warn',
 			},
-		})
+		});
 	}
 }
