@@ -1,6 +1,7 @@
 import {ILocationConfig, IServiceConfig} from "../config.define";
 import {ILocationRenderConfig, LocationBuilder} from "./location-builder";
 import {BlindLocation} from "./locations/blind.location";
+import {ManualLocation} from "./locations/manual.location";
 import {RootLocation} from "./locations/root.location";
 import {StaticLocation} from "./locations/static.location";
 import {WebsocketLocation} from "./locations/websocket.location";
@@ -15,6 +16,7 @@ function id(id: number) {
 }
 
 const $guid: any = {};
+
 function guid(name) {
 	if (!$guid[name]) {
 		$guid[name] = 0;
@@ -55,6 +57,8 @@ function factory({service}, location: ILocationConfig&ILocationRenderConfig) {
 			return new WellknownLocation({service}, <any>location);
 		case 'root':
 			return new RootLocation({service}, <any>location);
+		case 'manual':
+			return new ManualLocation({service}, <any>location);
 		}
 		throw new TypeError('invalid type: ' + type);
 	} catch (e) {
