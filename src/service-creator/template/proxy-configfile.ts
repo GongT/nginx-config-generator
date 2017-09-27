@@ -180,7 +180,7 @@ export class ForceJumpConfigFile extends ConfigFile<{}> {
 		const config = new ConfigValuesBundle('force https');
 		
 		const $if = new ConfigSection('if ($redirect_https)');
-		$if.push(new ConfigValue('return', ['302', '"https://$host$uri$is_args$args"']));
+		$if.push(new ConfigValue('return', ['308', '"https://$host$uri$is_args$args"']));
 		$if.push(new ConfigValue('break'));
 		
 		config.push($if);
