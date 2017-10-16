@@ -27,7 +27,7 @@ export class GlobalBodyConfigFile extends ConfigFile<{Host: string;}> {
 	}
 	
 	get fileStore(): KnownStore {
-		return KnownStore.SERVICE;
+		return KnownStore.PUBLIC;
 	}
 	
 	buildContent() {
@@ -59,7 +59,8 @@ access_by_lua_block {
 		ret.push(new ConfigValue('proxy_set_header', ['X-Https', '"$https$http_x_https"']));
 		ret.push(new ConfigValue('proxy_set_header', ['X-Http2', '"$http2$http_x_http2"']));
 		
-		ret.push(new ConfigValue('proxy_set_header', ['Host', this.option.Host]));
+		// ret.push(new ConfigValue('proxy_set_header', ['Host', this.option.Host]));
+		ret.push(new ConfigValue('proxy_set_header', ['Host', '$host']));
 		
 		return ret;
 	}

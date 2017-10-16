@@ -38,6 +38,7 @@ export enum KnownStore{
 	LOADER,
 	STREAM_SERVER,
 	HTTP,
+	PUBLIC,
 }
 
 export type ConfigFileCreator<T> = new(options: T) => ConfigFile<T>;
@@ -103,6 +104,8 @@ export abstract class ConfigFile<OptionType> {
 			return SERVICE_SAVE_FOLDER;
 		case KnownStore.HTTP:
 			return resolve(CONFIGFILE_PATH, 'conf.d');
+		case KnownStore.PUBLIC:
+			return resolve(CONFIGFILE_PATH, 'other-config.d');
 		case KnownStore.STREAM_SERVER:
 			return resolve(SERVICE_SAVE_FOLDER, 'streams', this.serviceName);
 		}

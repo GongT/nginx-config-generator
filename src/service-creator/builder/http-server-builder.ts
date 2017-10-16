@@ -57,7 +57,10 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 		};
 		
 		if (this.service.SSL && status.direction === RouteDirection.IN) {
-			if (status.SSLExists) {
+			if (!status.SSLExists || this.service.SSL === 'self') {
+				yield new FakeHttpsConfigFile(baseOpt);
+				yield normal();
+			} else {
 				const force = this.service.SSL === 'force';
 				if (force) {
 					yield new HttpWithJumpConfigFile(baseOpt);
@@ -68,9 +71,6 @@ export class HttpServerBuilder extends Builder<IHttpServerConfig> {
 					certPath: this.service.SSLPath,
 					withHttp: !force,
 				});
-			} else {
-				yield new FakeHttpsConfigFile(baseOpt);
-				yield normal();
 			}
 		} else {
 			yield normal(); // normal http

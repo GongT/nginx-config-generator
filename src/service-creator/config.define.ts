@@ -16,7 +16,7 @@ export interface IServiceConfig {
 	isGateway: boolean;
 	serviceName: string;
 	outerSubDomainName: string;
-	SSL: boolean|'force';
+	SSL: boolean|'force'|'self';
 	machines: string[];
 	interfaceMachine: string[];
 	alias: string[],
