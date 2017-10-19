@@ -10,6 +10,7 @@ const info = createLogger(LOG_LEVEL.INFO, 'file');
 const debug = createLogger(LOG_LEVEL.DEBUG, 'file');
 const notice = createLogger(LOG_LEVEL.NOTICE, 'file');
 const silly = createLogger(LOG_LEVEL.SILLY, 'file');
+const warn = createLogger(LOG_LEVEL.WARN, 'file');
 
 function md5(content: string) {
 	return createHash('md5').update(content).digest('hex');
@@ -24,9 +25,14 @@ export class FileTracker {
 		const hash = md5(content);
 		const fileDebug = debugPath(absPath);
 		if (this.isKnown(absPath)) {
+			if (!this.contentCompare[absPath]) {
+				this.contentCompare[absPath] = md5(readFileSync(absPath, {encoding: 'utf8'}));
+			}
 			if (this.contentCompare[absPath] === hash) {
 				silly('%s - not write - same content write twice', fileDebug);
 			} else {
+				warn('=file1(new)====================\n%s\n==========================', content);
+				warn('=file2(old)====================\n%s\n==========================', readFileSync(absPath, {encoding: 'utf8'}));
 				throw new Error('overwrite a single file twice with different content in same transaction: ' + absPath);
 			}
 		} else {
